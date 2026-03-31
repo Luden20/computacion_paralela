@@ -23,6 +23,9 @@ def process_chunk(file, limits):
             #We make sure the 'line' is in ascii codification
             if isinstance(line, bytes):
                 line = line.decode('ascii', errors='ignore')
+            #We skipe the headers
+            if line[0]=='>':
+                continue
             #We iterate char by char to make sure if it is in the valid chars we are looking for
             for char in line:
                 if char in ("A", "C", "G", "T"):
@@ -71,7 +74,7 @@ if __name__ == '__main__':
     actual_file=str(args.file)
     iterative = args.iterative
 
-    #If we dont add --iterative we just execute once with the num_processors indicated
+    #If we don't add --iterative we just execute once with the num_processors indicated
     if not iterative:
         print(f"one call with {num_processors} processors")
         actual_time = write_chunks_in_parallel(actual_file, num_processors)
