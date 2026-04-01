@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import repeat
 import sys
-
+ 
 #This function process the data
 #As parameters it gets the file output and a tuple that tells from where begin to read and where to end
 def process_chunk(file, limits):
@@ -39,7 +39,7 @@ def write_chunks_in_parallel(input_file_path, num_processes):
     #We open the file in read mode
     with open(input_file_path, 'rb') as input_file:
         num_lines = len(input_file.readlines())
-
+ 
         # // operator is 'the floor division operator'
         lines_per_chunk = num_lines // num_processes
         # We create a list of tuples with the (start,end) to work later
@@ -69,18 +69,18 @@ if __name__ == '__main__':
     parser.add_argument("--processors", help="Amount of max processors", type=int)
     parser.add_argument("--iterative", action="store_true", help="Ejecuta modo iterativo")
     args = parser.parse_args()
-
+ 
     num_processors =int(args.processors)
     actual_file=str(args.file)
     iterative = args.iterative
-
+ 
     #If we don't add --iterative we just execute once with the num_processors indicated
     if not iterative:
         print(f"one call with {num_processors} processors")
         actual_time = write_chunks_in_parallel(actual_file, num_processors)
         sys.exit()
     #If not we do the benchmarking
-
+ 
     #We create empty list to add later the data
     processors=[]
     times=[]
@@ -103,4 +103,36 @@ if __name__ == '__main__':
     #We save it as a png
     plt.savefig("grafica.png", dpi=300, bbox_inches="tight")
     plt.show()
+
+    t1 = times[0]
+    speedups     = [t1 / t for t in times]
+    efficiencies = [s / p for s, p in zip(speedups, processors)]
+    sp = np.array(speedups)
+    ef = np.array(efficiencies)
+ 
+    # Speedup
+    plt.figure(figsize=(8, 5))
+    plt.plot(x, sp, marker='o', color='darkorange', label='Actual Speedup')
+    plt.plot(x, x,  linestyle='--', color='gray', label='Ideal Speedup')
+    plt.xlabel("Processors")
+    plt.ylabel("Speedup S(p)")
+    plt.title("Speedup")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("grafica_speedup.png", dpi=300, bbox_inches="tight")
+    plt.show()
+ 
+    # Eficiencia
+    plt.figure(figsize=(8, 5))
+    plt.plot(x, ef, marker='o', color='seagreen', label='Actual Efficiency')
+    plt.axhline(y=1.0, linestyle='--', color='gray', label='Ideal Efficiency')
+    plt.xlabel("Processors")
+    plt.ylabel("Efficiency E(p)")
+    plt.title("Efficiency")
+    plt.ylim(0, 1.2)
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("grafica_efficiency.png", dpi=300, bbox_inches="tight")
+    plt.show()
+ 
     sys.exit()
