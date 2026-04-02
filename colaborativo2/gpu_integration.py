@@ -104,6 +104,8 @@ def gpu_calculation(c_path, file_path) -> DnaAnalysis:
 
         bin_path = lines[0]
         meta_path = lines[1]
+
+
         gpu_matrix = load_bin_to_cuda(bin_path, meta_path)
         cp.cuda.Stream.null.synchronize()
         start_time = time.perf_counter()

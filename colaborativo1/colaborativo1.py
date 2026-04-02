@@ -1,12 +1,12 @@
 import os
 import argparse
 import time
+import json
 from concurrent.futures import ProcessPoolExecutor
 from collections import Counter
-import matplotlib.pyplot as plt
-import numpy as np
 from itertools import repeat
 import sys
+import math
  
 #This function process the data
 #As parameters it gets the file output and a tuple that tells from where begin to read and where to end
@@ -36,12 +36,23 @@ def process_chunk(file, limits):
 def write_chunks_in_parallel(input_file_path, num_processes):
     #We take the start time
     start_total = time.perf_counter()
+    output_json_path = os.path.join(os.getcwd(), f"conteo_final_{num_processes}p.json")
     #We open the file in read mode
     with open(input_file_path, 'rb') as input_file:
         num_lines = len(input_file.readlines())
+
+        if num_lines == 0:
+            final_result = {}
+            with open(output_json_path, 'w', encoding='utf-8') as json_file:
+                json.dump(final_result, json_file, indent=2)
+            print("Conteo final: {}")
+            print(f"JSON guardado en: {output_json_path}")
+            time_taken = time.perf_counter() - start_total
+            print(f"{num_processes} p: {time_taken} s")
+            return time_taken
  
-        # // operator is 'the floor division operator'
-        lines_per_chunk = num_lines // num_processes
+        actual_workers = min(num_processes, num_lines)
+        lines_per_chunk = math.ceil(num_lines / actual_workers)
         # We create a list of tuples with the (start,end) to work later
         chunks = [
             (i, min(i + lines_per_chunk, num_lines))
@@ -50,7 +61,7 @@ def write_chunks_in_parallel(input_file_path, num_processes):
         #We use Counter to accumulate values from our results
         final_dic = Counter()
         #We use a Process Pool to give each Process a function and parameters
-        with ProcessPoolExecutor(max_workers=num_processes) as executor:
+        with ProcessPoolExecutor(max_workers=actual_workers) as executor:
             #All the results ends in result
             results = executor.map(process_chunk, repeat(input_file_path), chunks)
             #We iterate in results and add it to the Counter() to consolidate the finall resullt
@@ -58,7 +69,11 @@ def write_chunks_in_parallel(input_file_path, num_processes):
                 final_dic.update(res)
     #We take the end time and calculate the duration
     end_total = time.perf_counter()
-    print(f"Conteo final: {dict(final_dic)}")
+    final_result = dict(final_dic)
+    with open(output_json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(final_result, json_file, indent=2)
+    print(f"Conteo final: {final_result}")
+    print(f"JSON guardado en: {output_json_path}")
     time_taken = end_total - start_total
     print(f"{num_processes} p: {time_taken} s")
     return time_taken
@@ -80,6 +95,9 @@ if __name__ == '__main__':
         actual_time = write_chunks_in_parallel(actual_file, num_processors)
         sys.exit()
     #If not we do the benchmarking
+
+    import matplotlib.pyplot as plt
+    import numpy as np
  
     #We create empty list to add later the data
     processors=[]

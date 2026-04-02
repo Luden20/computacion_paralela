@@ -1,0 +1,33 @@
+{
+  "analyses": {
+    "cpu": [
+      {
+        "repeat": 1,
+        "result": {
+          "A": 558619211,
+          "C": 413530454,
+          "G": 413917617,
+          "T": 559373567,
+          "invalids": 1352989787
+        },
+        "time_seconds": 86.21635029999925,
+        "type": "CPU"
+      }
+    ],
+    "gpu": [
+      {
+        "repeat": 1,
+        "result": {
+          "A": 558619211,
+          "C": 413530454,
+          "G": 413917617,
+          "T": 559373567,
+          "invalids": 1352989787
+        },
+        "time_seconds": 1.0366281999995408,
+        "type": "GPU"
+      }
+    ]
+  },
+  "input_file": "C:\\DevStuff\\University\\computaion_paralela\\colaborativo2\\GCF_000001405.40_GRCh38.p14_genomic.fna"
+}

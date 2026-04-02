@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+from analysis_output import print_analysis, serialize_analysis, write_combined_analysis
 from benchmark_models import BenchmarkRun
 from cpu_integration import cpu_calculation
 from gpu_integration import gpu_calculation, gpu_support_status
@@ -19,6 +20,7 @@ def get_args():
     parser.add_argument("--processors", type=int, default=os.cpu_count() or 1, help="Procesos para la version CPU.")
     parser.add_argument("--repeats", type=int, default=1, help="Repeticiones por backend sobre el archivo completo.")
     parser.add_argument("--output-dir", type=str, default="benchmark_artifacts", help="Directorio de salida.")
+    parser.add_argument("--analysis-output-dir", type=str, default="analysis_outputs", help="Directorio donde se guardan los JSON de analisis.")
     parser.add_argument("--skip-cpu", action="store_true", help="Omite benchmarks CPU.")
     parser.add_argument("--skip-gpu", action="store_true", help="Omite benchmarks GPU.")
     return parser.parse_args()
@@ -167,13 +169,16 @@ def run_benchmarks(
     processors: int,
     repeats: int,
     output_dir: str = "benchmark_artifacts",
+    analysis_output_dir: str = "analysis_outputs",
     skip_cpu: bool = False,
     skip_gpu: bool = False,
 ) -> pd.DataFrame:
     source_path = Path(file_path).resolve()
     converter = Path(converter_path).resolve()
     artifacts_dir = Path(output_dir).resolve()
+    analysis_dir = Path(analysis_output_dir).resolve()
     artifacts_dir.mkdir(parents=True, exist_ok=True)
+    analysis_dir.mkdir(parents=True, exist_ok=True)
 
     selected_backends: list[str] = []
     if not skip_cpu:
@@ -189,6 +194,7 @@ def run_benchmarks(
             raise RuntimeError(f"No se puede ejecutar GPU: {message}")
 
     runs: list[BenchmarkRun] = []
+    combined_analyses: dict[str, list[dict]] = {"cpu": [], "gpu": []}
     print(f"Archivo completo seleccionado: {source_path.name}", flush=True)
     for backend in selected_backends:
         for repeat in range(1, repeats + 1):
@@ -203,12 +209,20 @@ def run_benchmarks(
                     converter_path=converter,
                 )
             )
+            print_analysis(runs[-1].analysis)
+            combined_analyses[backend.lower()].append(serialize_analysis(runs[-1].analysis, repeat=repeat))
 
     dataframe = pd.DataFrame(run.to_record() for run in runs)
     csv_path = artifacts_dir / "benchmark_results.csv"
     dataframe.to_csv(csv_path, index=False)
     write_summary(dataframe, artifacts_dir)
     create_plots(dataframe, artifacts_dir)
+    write_combined_analysis(
+        analyses={key: value for key, value in combined_analyses.items() if value},
+        input_file=str(source_path),
+        output_dir=str(analysis_dir),
+        file_suffix="benchmark_analysis_results",
+    )
 
     print(f"Resultados guardados en {csv_path}", flush=True)
     print(f"Graficas guardadas en {artifacts_dir / 'plots'}", flush=True)
@@ -223,6 +237,7 @@ def main():
         processors=args.processors,
         repeats=args.repeats,
         output_dir=args.output_dir,
+        analysis_output_dir=args.analysis_output_dir,
         skip_cpu=args.skip_cpu,
         skip_gpu=args.skip_gpu,
     )
