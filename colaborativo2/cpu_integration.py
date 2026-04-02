@@ -1,72 +1,81 @@
-import os
 import argparse
+import os
 import time
 from concurrent.futures import ProcessPoolExecutor
 from collections import Counter
-import matplotlib.pyplot as plt
-import numpy as np
 from itertools import repeat
 import sys
-from dto import DnaAnalysis,ExecutionType
+from dto import DnaAnalysis, ExecutionType
+
+
 # This function process the data
 # As parameters it gets the file output and a tuple that tells from where begin to read and where to end
 def process_chunk(file, limits):
     start, end = limits
     local_dic = {"A": 0, "C": 0, "G": 0, "T": 0, "invalids": 0}
+    valid_bytes = {
+        65: "A",
+        67: "C",
+        71: "G",
+        84: "T",
+    }
 
     with open(file, 'rb') as input_file:
-        for i, line in enumerate(input_file):
-            if i < start:
-                continue
-            if i >= end:
-                break
+        if start > 0:
+            input_file.seek(start - 1)
+            input_file.readline()
+        else:
+            input_file.seek(0)
 
-            if isinstance(line, bytes):
-                line = line.decode('ascii', errors='ignore')
+        while True:
+            line_start = input_file.tell()
+            if line_start >= end:
+                break
+            line = input_file.readline()
+            if not line:
+                break
 
             if not line:
                 continue
 
-            if line[0] == '>':
+            if line[0] == ord('>'):
                 continue
 
-            for char in line:
-                if char in ("A", "C", "G", "T"):
-                    local_dic[char] += 1
-                elif char not in ("\n", "\r"):
+            for byte in line:
+                if byte in valid_bytes:
+                    local_dic[valid_bytes[byte]] += 1
+                elif byte not in (10, 13):
                     local_dic["invalids"] += 1
 
     return local_dic
 
 # This function manage the parallel process by telling each process from where to read
-def cpu_calculation(input_file_path, num_processes)->DnaAnalysis:
+def cpu_calculation(input_file_path, num_processes) -> DnaAnalysis:
     print("Calculating CPU...")
-    num_lines = sum(1 for line in open(input_file_path))
-    # We take the start time
-    start_total = time.perf_counter()
-    # We open the file in read mode
-    with open(input_file_path, 'rb') as input_file:
-        num_lines = sum(1 for _ in input_file)
-        # // operator is 'the floor division operator'
-        lines_per_chunk = num_lines // num_processes
-        # We create a list of tuples with the (start,end) to work later
-        chunks = [
-            (i, min(i + lines_per_chunk, num_lines))
-            for i in range(0, num_lines, lines_per_chunk)
-        ]
-        # We use Counter to accumulate values from our results
-        final_dic = Counter()
-        # We use a Process Pool to give each Process a function and parameters
-        with ProcessPoolExecutor(max_workers=num_processes) as executor:
-            # All the results ends in result
-            results = executor.map(process_chunk, repeat(input_file_path), chunks)
-            # We iterate in results and add it to the Counter() to consolidate the finall resullt
-            for res in results:
-                final_dic.update(res)
+    if num_processes is None or num_processes <= 0:
+        raise ValueError("num_processes must be greater than zero")
+
+    file_size = os.path.getsize(input_file_path)
+    if file_size == 0:
+        return DnaAnalysis({"A": 0, "C": 0, "G": 0, "T": 0, "invalids": 0}, 0.0, ExecutionType.CPU)
+
+    worker_count = min(num_processes, file_size)
+    chunk_size = max(1, (file_size + worker_count - 1) // worker_count)
+    chunks = [
+        (offset, min(offset + chunk_size, file_size))
+        for offset in range(0, file_size, chunk_size)
+    ]
+    final_dic = Counter()
+
+    with ProcessPoolExecutor(max_workers=worker_count) as executor:
+        start_total = time.perf_counter()
+        results = executor.map(process_chunk, repeat(input_file_path), chunks)
+        for res in results:
+            final_dic.update(res)
+        end_total = time.perf_counter()
     # We take the end time and calculate the duration
-    end_total = time.perf_counter()
     time_taken = end_total - start_total
-    return DnaAnalysis(dict(final_dic), time_taken,ExecutionType.CPU)
+    return DnaAnalysis(dict(final_dic), time_taken, ExecutionType.CPU)
 
 
 def get_args():
@@ -77,6 +86,9 @@ def get_args():
     return parser.parse_args()
 
 def iterative_benchmark(num_processors, actual_file):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     # We create empty list to add later the data
     processors = []
     times = []
@@ -85,7 +97,7 @@ def iterative_benchmark(num_processors, actual_file):
         actual_time = cpu_calculation(actual_file, i)
         # We add to the list the data
         processors.append(i)
-        times.append(actual_time)
+        times.append(actual_time.time)
     # We transform the data into arrays to make the graphs
     x = np.array(processors)
     y = np.array(times)
@@ -135,6 +147,6 @@ def iterative_benchmark(num_processors, actual_file):
 if __name__ == '__main__':
     args = get_args()
     if not args.iterative:
-        cpu_calculation(int(args.processors), args.file)
+        print(cpu_calculation(args.file, int(args.processors)))
         sys.exit()
     iterative_benchmark(int(args.processors), args.file)

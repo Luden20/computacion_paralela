@@ -62,6 +62,9 @@ int main(int argc, char* argv[]) {
         }
 
         for (char c : line) {
+            if (c == '\r') {
+                continue;
+            }
             uint8_t value = encode_base(c);
             bin_file.write(reinterpret_cast<const char*>(&value), sizeof(uint8_t));
             total_cols++;

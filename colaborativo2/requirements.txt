@@ -1,0 +1,6 @@
+numpy
+pandas
+seaborn
+matplotlib
+psutil
+cupy-cuda12x

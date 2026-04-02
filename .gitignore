@@ -1,3 +1,6 @@
 *.fna
 *.bin
 *.meta
+**/__pycache__/
+colaborativo2/.venv/
+colaborativo2/benchmark_artifacts*/
