@@ -29,6 +29,11 @@ Este repositorio reúne materiales, prácticas y proyectos de la materia **Compu
 ## 🌐 Autoría
 Materia: **Computación Paralela**  
 Institución: *Pontificia Universidad Católica del Ecuador (PUCE)*  
+Estudiantes: 
+* Alfonso Chafla 
+* Omar Lozada
+* Sebastian Jacome
+* Toño Proaño
 Año: **2026**
 
 ---

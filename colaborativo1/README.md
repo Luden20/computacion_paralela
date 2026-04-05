@@ -48,6 +48,7 @@ python main.py --file ruta/al/archivo.fasta --processors 8 --iterative
 El proyecto genera gráficos que permiten evaluar cómo cambia el rendimiento según la cantidad de procesadores utilizados:
 
 ![Tiempo vs Procesadores](grafica.png)
+
 Interpretación: LLegando a los 6 procesadores el tiempo ya se encuetra por debajo de los 100 segundos, llegando a su punto más óptimo con 13 procesadores con el menor tiempo posible. 
 Pasado los 13 procesadores el teimpo en vez de reducir aumenta.
 Se puede concluir que el el rango ideal este entro los 8 y 13 procesadores ya dentro de esa franjea no existe una diferencia significativa. 
@@ -55,10 +56,14 @@ Se puede concluir que el el rango ideal este entro los 8 y 13 procesadores ya de
 ---
 ![Speedup](grafica_speedup.png)
 
-Interpretación: 
+Interpretación: El Speedup no es el esperado ya que se queda en valores menores a 6 aunque se aumente los procesadores el rendimiento decrece.
 
 
 ---
 ![Eficiencia](grafica_efficiency.png)
 
-Interpretación: 
+Interpretación: La eficiciencia va de la mano un poco con el Speedup ya que podemos notar que la eficiencia baja a más procesadores.
+
+
+## Conclusión general 
+El programa paraleliza bien pero si hablamos de recursos lo más óptimo seria sacrificar un poco de tiempo de procesamiento a cambio de "ahorrar" procesadores. Lo ideal para esta actividad teniendo en cuenta costo beneficio seria unos 3 a 4 procesadores con un timpo de poco mas de 100 segundos pero con un eficiencia entre el 70% y 80%. 
