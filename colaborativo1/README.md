@@ -17,16 +17,6 @@ Este proyecto es un script en Python diseñado para **contar las bases nucleotí
 
 ---
 
-## Requisitos
-
-- Python 3.7 o superior
-- Paquetes Python:
-
-
-pip install matplotlib numpy
-
-
-
 # Uso
 ## Ejecución simple
 
@@ -57,8 +47,18 @@ python main.py --file ruta/al/archivo.fasta --processors 8 --iterative
 
 El proyecto genera gráficos que permiten evaluar cómo cambia el rendimiento según la cantidad de procesadores utilizados:
 
-Interpretación: Puedes analizar cómo disminuye el tiempo de ejecución al aumentar los procesadores, y cómo se acerca o se aleja del rendimiento ideal. Los gráficos grafica_speedup.png y grafica_efficiency.png proporcionan información adicional sobre speedup y eficiencia, respectivamente.
-
 ![Tiempo vs Procesadores](grafica.png)
+Interpretación: LLegando a los 6 procesadores el tiempo ya se encuetra por debajo de los 100 segundos, llegando a su punto más óptimo con 13 procesadores con el menor tiempo posible. 
+Pasado los 13 procesadores el teimpo en vez de reducir aumenta.
+Se puede concluir que el el rango ideal este entro los 8 y 13 procesadores ya dentro de esa franjea no existe una diferencia significativa. 
+
+---
 ![Speedup](grafica_speedup.png)
+
+Interpretación: 
+
+
+---
 ![Eficiencia](grafica_efficiency.png)
+
+Interpretación: 
