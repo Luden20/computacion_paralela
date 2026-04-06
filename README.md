@@ -38,7 +38,6 @@ Año: **2026**
 
 ---
 
-## ✨ Estilo visual
 ![Banner Computación Paralela](https://img.shields.io/badge/Parallel-Computing-blue?style=for-the-badge&logo=github)
 
 ---
