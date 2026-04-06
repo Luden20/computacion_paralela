@@ -3,4 +3,5 @@ pandas
 seaborn
 matplotlib
 psutil
+# Requiere GPU NVIDIA con CUDA 12.x
 cupy-cuda12x
