@@ -115,8 +115,3 @@ python gpu/compare_dna_gpu.py \
 
 `--converter-path` sigue existiendo solo por compatibilidad, pero ya no es obligatorio.
 
-## Notas
-
-- Ejecuta los comandos desde la raíz de `parcial1` para que la salida quede centralizada.
-- Los `.fna` no se modifican.
-- Si CuPy o CUDA no están disponibles, la ruta GPU va a fallar al inicio con un mensaje explícito.
