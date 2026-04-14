@@ -1,3 +1,14 @@
+"""Comparador de ADN sobre GPU usando CuPy.
+
+El flujo general del script es:
+1. Validar que CuPy y CUDA estén disponibles.
+2. Leer ambos archivos en streaming para no cargarlos completos en memoria.
+3. Agrupar líneas comparables en lotes.
+4. Normalizar cada lote a matrices rectangulares y comparar en GPU.
+5. Escribir cada diferencia en `differences.json` y el resumen en
+   `execution_time.json`.
+"""
+
 import argparse
 import json
 import time
@@ -22,12 +33,16 @@ MAX_BATCH_CHARS = 8 * 1024 * 1024
 
 
 class ExecutionType(Enum):
+    """Etiqueta el backend usado durante la ejecución."""
+
     CPU = "CPU"
     GPU = "GPU"
 
 
 @dataclass
 class DnaComparison:
+    """Resultado consolidado de una ejecución de comparación."""
+
     total_differences: int
     time_taken: float
     execution_type: ExecutionType
@@ -35,12 +50,20 @@ class DnaComparison:
 
 @dataclass
 class ComparableBatchLine:
+    """Representa una pareja de líneas que sí debe compararse.
+
+    `byte_position` guarda la posición de lectura para poder ubicar luego la
+    diferencia en el archivo de salida.
+    """
+
     byte_position: int
     line1: bytes
     line2: bytes
 
 
 def gpu_support_status() -> tuple[bool, str]:
+    """Verifica si el entorno tiene CuPy operativo y al menos una GPU CUDA."""
+
     if cp is None:
         return False, "CuPy no esta instalado en el entorno actual."
     try:
@@ -53,6 +76,8 @@ def gpu_support_status() -> tuple[bool, str]:
 
 
 def trim_line_ending(raw_line: bytes) -> bytes:
+    """Elimina saltos de línea `\\n` y `\\r` del final de una línea binaria."""
+
     if raw_line.endswith(b"\n"):
         raw_line = raw_line[:-1]
     if raw_line.endswith(b"\r"):
@@ -61,16 +86,22 @@ def trim_line_ending(raw_line: bytes) -> bytes:
 
 
 def json_char_or_null(value: int | None) -> str:
+    """Serializa un byte como carácter JSON o `null` si no existe."""
+
     if value is None:
         return "null"
     return json.dumps(chr(value), ensure_ascii=False)
 
 
 def report_stage(stage_number: int, total_stages: int, message: str) -> None:
+    """Muestra en consola la etapa actual del pipeline."""
+
     print(f"[ETAPA {stage_number}/{total_stages}] {message}", flush=True)
 
 
 def report_progress(percent: int, compared_lines: int, total_differences: int) -> None:
+    """Reporta el avance acumulado de lectura y comparación."""
+
     print(
         f"Progreso: {percent}% | lineas comparables: {compared_lines} | diferencias acumuladas: {total_differences}",
         flush=True,
@@ -85,6 +116,12 @@ def write_difference(
     char1: int | None,
     char2: int | None,
 ) -> bool:
+    """Escribe una diferencia en formato JSON incremental.
+
+    Se devuelve el nuevo valor de `first_entry` para poder construir el arreglo
+    JSON sin dejar comas inválidas entre elementos.
+    """
+
     if not first_entry:
         output_file.write(",\n")
     else:
@@ -97,14 +134,25 @@ def write_difference(
 
 
 def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_entry: bool) -> tuple[int, bool]:
+    """Compara un lote completo en GPU y escribe sus diferencias.
+
+    Cada línea del lote se rellena hasta la longitud máxima para formar dos
+    matrices rectangulares. Luego se genera una máscara booleana con todas las
+    columnas distintas, incluyendo el caso en que una línea termina antes que
+    la otra.
+    """
+
     if not batch:
         return 0, first_entry
 
+    # Primero calculamos el tamaño real de cada línea para saber cuántas
+    # columnas son válidas en cada fila del lote.
     batch_size = len(batch)
     lengths1 = np.fromiter((len(item.line1) for item in batch), dtype=np.int32, count=batch_size)
     lengths2 = np.fromiter((len(item.line2) for item in batch), dtype=np.int32, count=batch_size)
     max_len = int(max(lengths1.max(initial=0), lengths2.max(initial=0)))
 
+    # Si todas las líneas del lote están vacías, no hay nada que comparar.
     if max_len == 0:
         return 0, first_entry
 
@@ -112,12 +160,14 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
     cpu_matrix1 = np.zeros((batch_size, max_len), dtype=np.uint8)
     cpu_matrix2 = np.zeros((batch_size, max_len), dtype=np.uint8)
 
+    # Copiamos cada línea binaria a su fila correspondiente.
     for row_index, item in enumerate(batch):
         if lengths1[row_index] > 0:
             cpu_matrix1[row_index, : lengths1[row_index]] = np.frombuffer(item.line1, dtype=np.uint8)
         if lengths2[row_index] > 0:
             cpu_matrix2[row_index, : lengths2[row_index]] = np.frombuffer(item.line2, dtype=np.uint8)
 
+    # Transferimos las matrices y metadatos a GPU para hacer la comparación vectorizada.
     gpu_matrix1 = cp.asarray(cpu_matrix1)
     gpu_matrix2 = cp.asarray(cpu_matrix2)
     gpu_lengths1 = cp.asarray(lengths1)
@@ -129,11 +179,13 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
     # También marcamos como diferencia cuando una línea se acaba antes que la otra.
     mismatch_mask = (valid1 != valid2) | ((gpu_matrix1 != gpu_matrix2) & valid1 & valid2)
 
+    # `nonzero` devuelve las coordenadas exactas de cada diferencia detectada.
     mismatch_rows, mismatch_cols = cp.nonzero(mismatch_mask)
     mismatch_rows_cpu = cp.asnumpy(mismatch_rows)
     mismatch_cols_cpu = cp.asnumpy(mismatch_cols)
     diff_count = int(mismatch_rows_cpu.size)
 
+    # Volvemos a CPU solo las coordenadas distintas para serializarlas al JSON.
     for row_index, column_index in zip(mismatch_rows_cpu.tolist(), mismatch_cols_cpu.tolist()):
         batch_item = batch[row_index]
         char1 = batch_item.line1[column_index] if column_index < len(batch_item.line1) else None
@@ -147,6 +199,7 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
             char2,
         )
 
+    # Liberamos referencias grandes para favorecer que CuPy/GC recuperen memoria del lote.
     del gpu_matrix1, gpu_matrix2, gpu_lengths1, gpu_lengths2, column_indexes
     del valid1, valid2, mismatch_mask, mismatch_rows, mismatch_cols
 
@@ -154,6 +207,8 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
 
 
 def build_execution_summary(file_path1: str, file_path2: str, result: DnaComparison) -> dict:
+    """Construye el resumen persistido en `execution_time.json`."""
+
     return {
         "file1": file_path1,
         "file2": file_path2,
@@ -163,6 +218,12 @@ def build_execution_summary(file_path1: str, file_path2: str, result: DnaCompari
 
 
 def gpu_calculation(*args) -> DnaComparison:
+    """Ejecuta la comparación completa con backend GPU.
+
+    Acepta la firma actual `(file_path1, file_path2)` y una firma antigua con
+    `converter_path` para mantener compatibilidad con llamadas previas.
+    """
+
     if len(args) == 2:
         converter_path = None
         file_path1, file_path2 = args
@@ -173,6 +234,8 @@ def gpu_calculation(*args) -> DnaComparison:
             "gpu_calculation espera (file_path1, file_path2) o (converter_path, file_path1, file_path2)."
         )
 
+    # El proceso está dividido en etapas para dar feedback visible durante
+    # ejecuciones largas.
     total_stages = 4
     report_stage(1, total_stages, "Validando entorno CUDA/CuPy...")
     available, message = gpu_support_status()
@@ -192,6 +255,7 @@ def gpu_calculation(*args) -> DnaComparison:
     if not input_path1.exists() or not input_path2.exists():
         raise FileNotFoundError("Uno de los archivos especificados no existe.")
 
+    # Usamos el tamaño máximo entre ambos archivos para estimar porcentaje de avance.
     size1 = input_path1.stat().st_size
     size2 = input_path2.stat().st_size
     max_size = max(size1, size2, 1)
@@ -206,6 +270,8 @@ def gpu_calculation(*args) -> DnaComparison:
     current_batch_chars = 0
 
     report_stage(3, total_stages, "Comparando bloques en GPU y escribiendo differences.json...")
+    # Sincronizamos antes y después de la medición para que el tiempo refleje
+    # realmente el trabajo hecho en GPU.
     cp.cuda.Stream.null.synchronize()
     start_time = time.perf_counter()
 
@@ -215,6 +281,7 @@ def gpu_calculation(*args) -> DnaComparison:
     ) as differences_json:
         differences_json.write("[\n")
 
+        # Leemos ambas entradas en paralelo, línea por línea.
         while True:
             raw_line1 = file1.readline()
             raw_line2 = file2.readline()
@@ -225,6 +292,7 @@ def gpu_calculation(*args) -> DnaComparison:
             line1 = trim_line_ending(raw_line1) if raw_line1 else b""
             line2 = trim_line_ending(raw_line2) if raw_line2 else b""
 
+            # Las cabeceras FASTA no forman parte de la secuencia a comparar.
             if (line1 and line1.startswith(b">")) or (line2 and line2.startswith(b">")):
                 current_percent = int((max(file1.tell(), file2.tell()) * 100) / max_size)
                 if current_percent >= last_reported_percent + PROGRESS_STEP:
@@ -234,6 +302,8 @@ def gpu_calculation(*args) -> DnaComparison:
                         last_reported_percent = current_percent
                 continue
 
+            # Guardamos la línea junto con su posición para poder reportar
+            # diferencias precisas en el JSON final.
             current_batch.append(
                 ComparableBatchLine(
                     byte_position=file1.tell(),
@@ -264,6 +334,7 @@ def gpu_calculation(*args) -> DnaComparison:
                         report_progress(current_percent, compared_lines, total_differences)
                         last_reported_percent = current_percent
 
+        # Si quedaron líneas pendientes fuera del umbral del lote, también se comparan.
         if current_batch:
             batch_differences, first_entry = compare_batch_on_gpu(
                 current_batch,
@@ -295,6 +366,8 @@ def gpu_calculation(*args) -> DnaComparison:
 
 
 def parse_args():
+    """Define y parsea los argumentos de línea de comandos."""
+
     parser = argparse.ArgumentParser(description="Comparador de ADN con GPU (CuPy)")
     parser.add_argument("--file1", help="First DNA file", type=str, required=True)
     parser.add_argument("--file2", help="Second DNA file", type=str, required=True)
@@ -308,6 +381,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    # Punto de entrada CLI: ejecuta la comparación y muestra un resumen legible.
     args = parse_args()
 
     try:
