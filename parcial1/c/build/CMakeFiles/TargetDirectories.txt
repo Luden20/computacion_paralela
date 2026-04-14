@@ -1,0 +1,3 @@
+/mnt/c/DevStuff/University/computaion_paralela/colaborativo2/c/build/CMakeFiles/c.dir
+/mnt/c/DevStuff/University/computaion_paralela/colaborativo2/c/build/CMakeFiles/edit_cache.dir
+/mnt/c/DevStuff/University/computaion_paralela/colaborativo2/c/build/CMakeFiles/rebuild_cache.dir
