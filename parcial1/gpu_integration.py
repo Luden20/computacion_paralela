@@ -111,14 +111,14 @@ def gpu_calculation(c_path, file_path1, file_path2) -> DnaAnalysis:
 
     print("Calculating GPU...")
 
-    # 🔹 Cargar ambas secuencias
+    # Cargar ambas secuencias
     gpu_matrix1 = load_gpu_matrix(file_path1)
     gpu_matrix2 = load_gpu_matrix(file_path2)
 
     cp.cuda.Stream.null.synchronize()
     start_time = time.perf_counter()
 
-    # 🔹 Conteo (puedes hacerlo solo para una si quieres)
+    # Conteo
     counts = {
         "A": int(cp.sum(gpu_matrix1 == 65, dtype=cp.int64).item()),
         "C": int(cp.sum(gpu_matrix1 == 67, dtype=cp.int64).item()),
@@ -159,8 +159,18 @@ def gpu_calculation(c_path, file_path1, file_path2) -> DnaAnalysis:
 
 if __name__ == "__main__":
     print("Program started", flush=True)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="File that needs to be analyzed", type=str)
-    parser.add_argument("--converter-path", help="Executable path of the c program required", type=str, required=True)
+    
+    parser.add_argument("--file1", help="First DNA file", type=str, required=True)
+    parser.add_argument("--file2", help="Second DNA file", type=str, required=True)
+    parser.add_argument(
+        "--converter-path",
+        help="Executable path of the C program required",
+        type=str,
+        required=True
+    )
+
     args = parser.parse_args()
-    print(gpu_calculation(args.converter_path, args.file))
+
+    print(gpu_calculation(args.converter_path, args.file1, args.file2))
