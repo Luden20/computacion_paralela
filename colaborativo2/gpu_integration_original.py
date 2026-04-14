@@ -82,80 +82,46 @@ def gpu_alternative_calculation(filepath:str)->DnaAnalysis:
     return DnaAnalysis(count,time_taken,ExecutionType.GPU)
 
 
-def gpu_calculation(c_path, file_path1, file_path2) -> DnaAnalysis:
+def gpu_calculation(c_path, file_path) -> DnaAnalysis:
     available, message = gpu_support_status()
     if not available:
         raise RuntimeError(message)
 
     converter_path = str(Path(c_path).resolve())
-
-    def load_gpu_matrix(input_path):
-        input_path = str(Path(input_path).resolve())
-
+    input_path = str(Path(file_path).resolve())
+    print("Calculating GPU...")
+    with tempfile.TemporaryDirectory(prefix="dna_gpu_") as temp_dir:
         result = subprocess.run(
             [converter_path, input_path],
             capture_output=True,
             text=True,
             check=True,
-            cwd=tempfile.gettempdir(),
+            cwd=temp_dir,
         )
-
         lines = result.stdout.strip().splitlines()
         if len(lines) < 2:
-            raise RuntimeError(f"El convertidor no devolvio rutas válidas. stdout={result.stdout!r}")
+            raise RuntimeError(f"El convertidor no devolvio las rutas esperadas. stdout={result.stdout!r}")
 
         bin_path = lines[0]
         meta_path = lines[1]
 
-        return load_bin_to_cuda(bin_path, meta_path)
 
-    print("Calculating GPU...")
+        gpu_matrix = load_bin_to_cuda(bin_path, meta_path)
 
-    # 🔹 Cargar ambas secuencias
-    gpu_matrix1 = load_gpu_matrix(file_path1)
-    gpu_matrix2 = load_gpu_matrix(file_path2)
-
-    cp.cuda.Stream.null.synchronize()
-    start_time = time.perf_counter()
-
-    # 🔹 Conteo (puedes hacerlo solo para una si quieres)
-    counts = {
-        "A": int(cp.sum(gpu_matrix1 == 65, dtype=cp.int64).item()),
-        "C": int(cp.sum(gpu_matrix1 == 67, dtype=cp.int64).item()),
-        "G": int(cp.sum(gpu_matrix1 == 71, dtype=cp.int64).item()),
-        "T": int(cp.sum(gpu_matrix1 == 84, dtype=cp.int64).item())
-    }
-    counts["invalids"] = gpu_matrix1.size - (
-        counts["A"] + counts["C"] + counts["G"] + counts["T"]
-    )
-
-    # 🔥 COMPARACIÓN GPU
-    min_len = min(gpu_matrix1.size, gpu_matrix2.size)
-
-    comp = gpu_matrix1[:min_len] == gpu_matrix2[:min_len]
-
-    matches = int(cp.sum(comp, dtype=cp.int64).item())
-    mismatches = min_len - matches
-
-    # considerar diferencia de longitud
-    length_diff = abs(gpu_matrix1.size - gpu_matrix2.size)
-    mismatches += length_diff
-
-    similarity = matches / max(gpu_matrix1.size, gpu_matrix2.size) * 100
-
-    cp.cuda.Stream.null.synchronize()
+        
+        cp.cuda.Stream.null.synchronize()
+        start_time = time.perf_counter()
+        counts = {
+            "A": int(cp.sum(gpu_matrix == 65, dtype=cp.int64).item()),
+            "C": int(cp.sum(gpu_matrix == 67, dtype=cp.int64).item()),
+            "G": int(cp.sum(gpu_matrix == 71, dtype=cp.int64).item()),
+            "T": int(cp.sum(gpu_matrix == 84, dtype=cp.int64).item())
+        }
+        counts["invalids"] = gpu_matrix.size - (counts["A"] + counts["C"] + counts["G"] + counts["T"])
+        cp.cuda.Stream.null.synchronize()
     end_time = time.perf_counter()
-
     time_taken = end_time - start_time
-
-    return DnaAnalysis(
-        counts=counts,
-        time_taken=time_taken,
-        execution_type=ExecutionType.GPU,
-        matches=matches,
-        mismatches=mismatches,
-        similarity=similarity
-    )
+    return DnaAnalysis(counts, time_taken, ExecutionType.GPU)
 
 if __name__ == "__main__":
     print("Program started", flush=True)
