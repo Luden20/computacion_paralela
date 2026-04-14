@@ -15,28 +15,33 @@ class ExecutionType(Enum):
 
 @dataclass
 class DnaComparison:
-    differences: list
+    total_differences: int
     time_taken: float
     execution_type: ExecutionType
 
 def process_chunk(file1, file2, limits):
     """
-    Procesa un bloque de los archivos y busca diferencias carácter por carácter,
-    omitiendo las líneas de cabecera (que empiezan con '>').
+    Procesa un bloque y escribe las diferencias directamente en disco para no 
+    agotar la memoria RAM con archivos de varios Gigabytes.
     """
     start, end = limits
-    differences = []
-
+    if start == 0:
+        print("[INFO] Primer worker: Iniciando lectura de la secuencia...")
+        
+    diff_count = 0
+    temp_file = f"temp_chunk_{start}.json"
+    
     try:
-        with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+        with open(file1, 'rb') as f1, open(file2, 'rb') as f2, open(temp_file, 'w') as out_f:
             f1.seek(start)
             f2.seek(start)
             
-            # Si no es el inicio del archivo, descartamos la línea actual para 
-            # asegurar que empezamos al inicio de una línea completa (opcional según el formato)
             if start != 0:
                 f1.readline()
                 f2.readline()
+
+            out_f.write('[')
+            first_entry = True
 
             while f1.tell() < end or f2.tell() < end:
                 line1 = f1.readline()
@@ -45,27 +50,32 @@ def process_chunk(file1, file2, limits):
                 if not line1 and not line2:
                     break
 
-                # Decodificamos las líneas (maneja archivo agotado)
                 s1 = line1.decode('utf-8', errors='ignore').strip() if line1 else ""
                 s2 = line2.decode('utf-8', errors='ignore').strip() if line2 else ""
 
-                # Ignorar cabeceras FASTA (solo si ambas existen o una existe y no es el final)
                 if (s1.startswith('>') or s2.startswith('>')):
                     continue
 
-                # Comparar base por base
                 max_len = max(len(s1), len(s2))
                 for j in range(max_len):
                     char1 = s1[j] if j < len(s1) else None
                     char2 = s2[j] if j < len(s2) else None
                     
                     if char1 != char2:
-                        # Guardamos la posición aproximada y los caracteres
-                        differences.append((f1.tell(), j, char1, char2))
+                        # Escribimos a disco en vez de guardar en memoria
+                        if not first_entry:
+                            out_f.write(',')
+                        else:
+                            first_entry = False
+                            
+                        # Guardamos un objeto ligero
+                        out_f.write(json.dumps([f1.tell(), j, char1, char2]))
+                        diff_count += 1
+            out_f.write(']')
     except Exception as e:
         print(f"Error procesando chunk {limits}: {e}")
         
-    return differences
+    return temp_file, diff_count
 
 def cpu_calculation(path1, path2, num_processes):
     if not os.path.exists(path1) or not os.path.exists(path2):
@@ -81,36 +91,59 @@ def cpu_calculation(path1, path2, num_processes):
     chunk_size = (max_file_size // total_chunks) + 1
     chunks = [(i, min(i + chunk_size, max_file_size)) for i in range(0, max_file_size, chunk_size)]
 
-    all_differences = []
-    worker_count = max(1, num_processes)
+    total_differences = 0
+    generated_temp_files = []
     
-    with ProcessPoolExecutor(max_workers=worker_count) as executor:
-        start_time = time.perf_counter()
+    # Preparamos el archivo final para escribir todo en streaming
+    print("\nAbriendo archivo final JSON...")
+    with open("differences.json", "w") as final_json:
+        final_json.write('[\n')
         
-        # Usamos submit para rastrear el progreso de cada chunk
-        futures = {executor.submit(process_chunk, path1, path2, chunk): chunk for chunk in chunks}
-        
-        completed_count = 0
-        last_reported_percent = -1
-        
-        for future in as_completed(futures):
-            try:
-                res_chunk = future.result()
-                all_differences.extend(res_chunk)
-                completed_count += 1
-                
-                # Calcular porcentaje
-                percent = int((completed_count / total_chunks) * 100)
-                if percent % 10 == 0 and percent != last_reported_percent:
-                    print(f"Progreso: {percent}% completado...")
-                    last_reported_percent = percent
-                    
-            except Exception as e:
-                print(f"Error en un worker: {e}")
+        with ProcessPoolExecutor(max_workers=worker_count) as executor:
+            start_time = time.perf_counter()
             
-        end_time = time.perf_counter()
+            futures = {executor.submit(process_chunk, path1, path2, chunk): chunk for chunk in chunks}
+            
+            completed_count = 0
+            last_reported_percent = -1
+            first_write = True
+            
+            for future in as_completed(futures):
+                try:
+                    tmp_file, chunk_diffs = future.result()
+                    total_differences += chunk_diffs
+                    completed_count += 1
+                    
+                    # Consolidar el json temporal al json principal de inmediato para ahorrar espacio
+                    if os.path.exists(tmp_file):
+                        with open(tmp_file, 'r') as tmp_in:
+                            content = tmp_in.read()
+                            if len(content) > 2: # Si no es solo "[]"
+                                if not first_write:
+                                    final_json.write(',\n')
+                                else:
+                                    first_write = False
+                                
+                                # Quitamos los corchetes exteriores [] del temporal
+                                inner_content = content[1:-1]
+                                final_json.write(inner_content)
+                        # Eliminamos el archivo temporal
+                        os.remove(tmp_file)
+                    
+                    # Calcular porcentaje
+                    percent = int((completed_count / total_chunks) * 100)
+                    if percent % 10 == 0 and percent != last_reported_percent:
+                        print(f"Progreso: {percent}% completado...")
+                        last_reported_percent = percent
+                        
+                except Exception as e:
+                    print(f"Error en un worker: {e}")
+                
+            end_time = time.perf_counter()
+            
+        final_json.write('\n]')
 
-    return DnaComparison(all_differences, end_time - start_time, ExecutionType.CPU)
+    return DnaComparison(total_differences, end_time - start_time, ExecutionType.CPU)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Comparador de archivos de ADN en paralelo")
@@ -130,31 +163,17 @@ if __name__ == "__main__":
         print(f"Archivo 1: {os.path.basename(args.file1)}")
         print(f"Archivo 2: {os.path.basename(args.file2)}")
         print(f"Tiempo total: {res.time_taken:.4f} segundos")
-        print(f"Total de diferencias: {len(res.differences)}")
-        
-        # Guardar en JSON
-        print("\nGuardando resultados en JSON...")
-        with open("differences.json", "w") as f_diff:
-            json.dump(res.differences, f_diff, indent=4)
+        print(f"Total de diferencias: {res.total_differences}")
         
         with open("execution_time.json", "w") as f_time:
             json.dump({
                 "file1": args.file1,
                 "file2": args.file2,
                 "time_taken": res.time_taken,
-                "total_differences": len(res.differences)
+                "total_differences": res.total_differences
             }, f_time, indent=4)
         
-        print("Archivos 'differences.json' y 'execution_time.json' generados.")
-
-        if res.differences:
-            print("\nPrimeras diferencias encontradas (Offset, Columna, Valor1, Valor2):")
-            for diff in res.differences[:15]:
-                v1 = diff[2] if diff[2] else "[VACÍO]"
-                v2 = diff[3] if diff[3] else "[VACÍO]"
-                print(f" -> Pos: {diff[0]} | Col: {diff[1]} | '{v1}' vs '{v2}'")
-        else:
-            print("\n¡Los archivos son idénticos en sus secuencias!")
+        print("\nArchivos 'differences.json' y 'execution_time.json' generados y actualizados correctamente.")
 
     except Exception as e:
         print(f"Error durante la ejecución: {e}")
