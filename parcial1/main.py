@@ -99,7 +99,7 @@ def cpu_calculation(path1, path2, num_processes):
     with open("differences.json", "w") as final_json:
         final_json.write('[\n')
         
-        with ProcessPoolExecutor(max_workers=worker_count) as executor:
+        with ProcessPoolExecutor(max_workers=num_processes) as executor:
             start_time = time.perf_counter()
             
             futures = {executor.submit(process_chunk, path1, path2, chunk): chunk for chunk in chunks}

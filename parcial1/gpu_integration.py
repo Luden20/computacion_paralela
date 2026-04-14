@@ -1,16 +1,24 @@
 import time
-
 import argparse
 import tempfile
 from pathlib import Path
 import numpy as np
 import subprocess
-from dto import DnaAnalysis, ExecutionType
+from enum import Enum
+from dataclasses import dataclass
+import cupy as cp
 
-try:
-    import cupy as cp
-except ImportError:
-    cp = None
+
+class ExecutionType(Enum):
+    CPU = "CPU"
+    GPU = "GPU"
+
+@dataclass
+class DnaComparison:
+    total_differences: int
+    time_taken: float
+    execution_type: ExecutionType
+
 
 
 def gpu_support_status() -> tuple[bool, str]:
@@ -52,37 +60,10 @@ def load_bin_to_cuda(bin_path, meta_path):
     gpu_matrix = cp.asarray(cpu_matrix)
     return gpu_matrix
 
-def gpu_alternative_calculation(filepath:str)->DnaAnalysis:
-    available, message = gpu_support_status()
-    if not available:
-        raise RuntimeError(message)
+def gpu_alternative_calculation(filepath:str)->DnaComparison:
+    pass
 
-    print("Calculating GPU...",flush=True)
-    init_bytes=np.fromfile(filepath, dtype=np.uint8)
-    gpu_bytes=cp.asarray(init_bytes)
-    cp.cuda.Stream.null.synchronize()
-    start_time = time.perf_counter()
-    count_a = int(cp.count_nonzero(gpu_bytes == 65).item())
-    count_c = int(cp.count_nonzero(gpu_bytes == 67).item())
-    count_g = int(cp.count_nonzero(gpu_bytes == 71).item())
-    count_t = int(cp.count_nonzero(gpu_bytes == 84).item())
-
-    total_valid = count_a + count_c + count_g + count_t
-    invalids = int(gpu_bytes.size - total_valid)
-    count={
-        "A": count_a,
-        "C": count_c,
-        "G": count_g,
-        "T": count_t,
-        "invalids": invalids
-    }
-    cp.cuda.Stream.null.synchronize()
-    end_time=time.perf_counter()
-    time_taken=end_time-start_time
-    return DnaAnalysis(count,time_taken,ExecutionType.GPU)
-
-
-def gpu_calculation(c_path, file_path1, file_path2) -> DnaAnalysis:
+def gpu_calculation(c_path, file_path1, file_path2) -> DnaComparison:
     available, message = gpu_support_status()
     if not available:
         raise RuntimeError(message)
@@ -129,32 +110,28 @@ def gpu_calculation(c_path, file_path1, file_path2) -> DnaAnalysis:
         counts["A"] + counts["C"] + counts["G"] + counts["T"]
     )
 
-    # 🔥 COMPARACIÓN GPU
+    # 🔥 COMPARACIÓN EN FORMA DE MATRIZ GPU
     min_len = min(gpu_matrix1.size, gpu_matrix2.size)
 
-    comp = gpu_matrix1[:min_len] == gpu_matrix2[:min_len]
+    # Creamos una matriz booleana donde los caracteres son distintos
+    mismatch_matrix = (gpu_matrix1[:min_len] != gpu_matrix2[:min_len])
+    
+    # Sumamos rápidamente todos los booleanos (True = 1) para contar las diferencias
+    mismatches = int(cp.sum(mismatch_matrix, dtype=cp.int64).item())
 
-    matches = int(cp.sum(comp, dtype=cp.int64).item())
-    mismatches = min_len - matches
-
-    # considerar diferencia de longitud
+    # considerar diferencia de longitud como diferencias adicionales
     length_diff = abs(gpu_matrix1.size - gpu_matrix2.size)
-    mismatches += length_diff
-
-    similarity = matches / max(gpu_matrix1.size, gpu_matrix2.size) * 100
+    total_differences = mismatches + length_diff
 
     cp.cuda.Stream.null.synchronize()
     end_time = time.perf_counter()
 
     time_taken = end_time - start_time
 
-    return DnaAnalysis(
-        counts=counts,
+    return DnaComparison(
+        total_differences=total_differences,
         time_taken=time_taken,
-        execution_type=ExecutionType.GPU,
-        matches=matches,
-        mismatches=mismatches,
-        similarity=similarity
+        execution_type=ExecutionType.GPU
     )
 
 if __name__ == "__main__":
