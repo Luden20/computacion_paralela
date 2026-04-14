@@ -1,38 +1,122 @@
-# Comparador de ADN Paralelo
+# Parcial 1 Final
 
-Este script realiza una comparación carácter por carácter entre dos secuencias de ADN (archivos `.fna` / `.fasta`) dividiendo el trabajo en múltiples procesos (Parallel Processing) para disminuir el tiempo de ejecución de estos análisis masivos.
+Comparador de ADN para archivos `.fna` / `.fasta` con dos rutas de ejecución:
 
-Para evitar desbordamientos de memoria RAM (debido al gran tamaño de los genomas y la posibilidad de millones de diferencias por usar bases de datos distintas), el script trabaja transmitiendo las diferencias directamente al disco duro en tiempo real.
+- `cpu/`: comparación exacta usando paralelismo en CPU.
+- `gpu/`: comparación exacta por lotes usando CuPy en GPU, con reporte de progreso por etapas.
 
-## Requisitos
+Los archivos grandes `GCA_*.fna` y `GCF_*.fna` se mantienen en la raíz del proyecto y no forman parte de la lógica del código.
 
-- **Python 3.x**
-- No requiere dependencias externas, ya que hace uso de librerías nativas (`concurrent.futures`, `json`, `argparse`, `os`).
+## Estructura
 
-## Uso Básico
-
-Abre tu terminal (o PowerShell / CMD) en la carpeta del proyecto y ejecuta el siguiente comando:
-
-```powershell
-python main.py --file1 "ruta/archivo1.fna" --file2 "ruta/archivo2.fna" --workers 8
+```text
+parcial1/
+├── cpu/
+│   ├── compare_dna_cpu.py
+│   ├── compare_dna_cpu.cpp
+│   ├── compare_dna_cpu_linux
+│   └── compare_dna_cpu_windows.exe
+├── gpu/
+│   ├── compare_dna_gpu.py
+│   ├── requirements.txt
+│   └── converter/
+│       ├── fasta_to_binary_converter.cpp
+│       ├── fasta_to_binary_converter_windows.exe
+│       ├── build_windows_converter.txt
+│       └── CMakeLists.txt
+├── GCA_000001405.29_GRCh38.p14_genomic.fna
+├── GCF_000001405.40_GRCh38.p14_genomic.fna
+├── differences.json
+└── execution_time.json
 ```
 
-### Argumentos:
-- `--file1`: Ruta del primer archivo del genoma que quieres comparar. **(Requerido)**
-- `--file2`: Ruta del segundo archivo del genoma para realizar la comparación. **(Requerido)**
-- `--workers`: Cantidad de procesos de CPU que se asignarán. Si no estás seguro de cuántos núcleos tiene tu PC, puedes omitir este parámetro y usará un valor por defecto.
+## Cómo funciona
 
-**Ejemplo completo:**
-```powershell
-python main.py --file1 "GCA_000001405.29_GRCh38.p14_genomic.fna" --file2 "GCF_000001405.40_GRCh38.p14_genomic.fna" --workers 8
+### Ruta CPU
+
+`cpu/compare_dna_cpu.py` divide la comparación en bloques, reparte el trabajo entre varios procesos y escribe diferencias temporales en disco para no saturar RAM. Al final consolida todo en un solo `differences.json`.
+
+`cpu/compare_dna_cpu.cpp` hace la misma idea desde C++, también en paralelo y escribiendo el resultado final en JSON.
+
+### Ruta GPU
+
+`gpu/compare_dna_gpu.py` lee ambas secuencias en streaming, agrupa líneas comparables en lotes y usa CuPy para comparar muchas columnas al mismo tiempo en GPU. Las diferencias se escriben directo a disco y el script muestra:
+
+- etapa actual del proceso;
+- porcentaje de progreso;
+- líneas comparables acumuladas;
+- diferencias acumuladas.
+
+La carpeta `gpu/converter/` quedó organizada como convertidor legado. La implementación GPU actual ya no depende de ese convertidor para la comparación exacta, pero se conserva como utilidad auxiliar y referencia.
+
+## Salidas
+
+Tanto CPU como GPU generan en la raíz del proyecto:
+
+- `differences.json`: arreglo JSON con el formato `[posicion_global_del_byte, columna_en_la_linea, caracter_archivo_1, caracter_archivo_2]`.
+- `execution_time.json`: resumen con archivo 1, archivo 2, tiempo total y cantidad total de diferencias.
+
+> Aviso: `differences.json` puede crecer muchísimo si los genomas difieren bastante.
+
+## Uso
+
+Abre terminal en la raíz de `parcial1`.
+
+### CPU en Python
+
+```bash
+python cpu/compare_dna_cpu.py \
+  --file1 GCA_000001405.29_GRCh38.p14_genomic.fna \
+  --file2 GCF_000001405.40_GRCh38.p14_genomic.fna \
+  --workers 8
 ```
 
-## Salidas (Resultados)
+### CPU en C++
 
-Al terminar el proceso, se generarán automáticamente dos archivos en la carpeta del script:
+Linux:
 
-1. **`execution_time.json`**: Guarda un resumen corto con los nombres de los dos archivos evaluados, el tiempo total que demoró la ejecución en paralelismo, y la cantidad total de diferencias encontradas.
-2. **`differences.json`**: Contiene la matriz (en formato JSON) con todas las características divergentes entre las cadenas biológicas. Por cada diferencia encontrada verás el siguiente formato:
-   `[posición_global_del_byte, columna_en_la_línea, carácter_f1, carácter_f2]`
+```bash
+./cpu/compare_dna_cpu_linux \
+  --file1 GCA_000001405.29_GRCh38.p14_genomic.fna \
+  --file2 GCF_000001405.40_GRCh38.p14_genomic.fna \
+  --workers 8
+```
 
-> **Aviso Importante:** Dependiendo de cuán ajenas sean las dos genéticas analizadas, el archivo `differences.json` puede engordar de tamaño significativamente, consumiendo varios Gigabytes de tu disco duro. 
+Windows:
+
+```powershell
+.\cpu\compare_dna_cpu_windows.exe `
+  --file1 GCA_000001405.29_GRCh38.p14_genomic.fna `
+  --file2 GCF_000001405.40_GRCh38.p14_genomic.fna `
+  --workers 8
+```
+
+Si necesitas recompilar el comparador C++:
+
+```bash
+g++ cpu/compare_dna_cpu.cpp -O2 -std=c++20 -o cpu/compare_dna_cpu_linux
+```
+
+### GPU con CuPy
+
+Primero instala las dependencias del entorno GPU:
+
+```bash
+pip install -r gpu/requirements.txt
+```
+
+Luego ejecuta:
+
+```bash
+python gpu/compare_dna_gpu.py \
+  --file1 GCA_000001405.29_GRCh38.p14_genomic.fna \
+  --file2 GCF_000001405.40_GRCh38.p14_genomic.fna
+```
+
+`--converter-path` sigue existiendo solo por compatibilidad, pero ya no es obligatorio.
+
+## Notas
+
+- Ejecuta los comandos desde la raíz de `parcial1` para que la salida quede centralizada.
+- Los `.fna` no se modifican.
+- Si CuPy o CUDA no están disponibles, la ruta GPU va a fallar al inicio con un mensaje explícito.

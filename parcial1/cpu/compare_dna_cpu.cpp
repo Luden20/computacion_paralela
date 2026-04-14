@@ -134,6 +134,7 @@ static std::vector<ChunkLimits> build_line_aligned_chunks(
         throw std::runtime_error("No se pudo abrir el archivo de referencia para dividir chunks.");
     }
 
+    // Cada chunk se alinea al final de una linea para evitar cortar secuencias a la mitad.
     const std::uint64_t chunk_size = (max_file_size / target_chunk_count) + 1;
     std::uint64_t start = 0;
 
@@ -206,6 +207,7 @@ static std::uint64_t process_chunk(
                 line2.clear();
             }
 
+            // Las cabeceras FASTA no participan en la comparacion de bases.
             if ((!line1.empty() && line1.front() == '>') || (!line2.empty() && line2.front() == '>')) {
                 continue;
             }
@@ -407,6 +409,7 @@ static DnaComparison cpu_calculation(const std::string& path1, const std::string
         }
     );
 
+    // Se consolidan los temporales al final para producir un solo differences.json.
     std::cout << "\nAbriendo archivo final JSON...\n";
     std::ofstream final_json("differences.json", std::ios::binary);
     if (!final_json) {

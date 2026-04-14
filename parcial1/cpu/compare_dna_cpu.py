@@ -2,11 +2,15 @@ import argparse
 import os
 import time
 import json
-from collections import Counter
-from itertools import repeat
+from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from dataclasses import dataclass
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DIFFERENCES_JSON_PATH = PROJECT_ROOT / "differences.json"
+EXECUTION_TIME_JSON_PATH = PROJECT_ROOT / "execution_time.json"
 
 # Estructuras de datos para los resultados
 class ExecutionType(Enum):
@@ -29,7 +33,7 @@ def process_chunk(file1, file2, limits):
         print("[INFO] Primer worker: Iniciando lectura de la secuencia...")
         
     diff_count = 0
-    temp_file = f"temp_chunk_{start}.json"
+    temp_file = PROJECT_ROOT / f"temp_chunk_{start}.json"
     
     try:
         with open(file1, 'rb') as f1, open(file2, 'rb') as f2, open(temp_file, 'w') as out_f:
@@ -86,17 +90,16 @@ def cpu_calculation(path1, path2, num_processes):
     size2 = os.path.getsize(path2)
     max_file_size = max(size1, size2)
     
-    # Para reportar progreso cada 10%, dividimos en 100 trozos
+    # Dividimos el archivo grande en 100 bloques para repartir trabajo y medir avance.
     total_chunks = 100
     chunk_size = (max_file_size // total_chunks) + 1
     chunks = [(i, min(i + chunk_size, max_file_size)) for i in range(0, max_file_size, chunk_size)]
 
     total_differences = 0
-    generated_temp_files = []
     
-    # Preparamos el archivo final para escribir todo en streaming
+    # El JSON final se arma en streaming para no acumular millones de diferencias en RAM.
     print("\nAbriendo archivo final JSON...")
-    with open("differences.json", "w") as final_json:
+    with DIFFERENCES_JSON_PATH.open("w", encoding="utf-8") as final_json:
         final_json.write('[\n')
         
         with ProcessPoolExecutor(max_workers=num_processes) as executor:
@@ -114,9 +117,9 @@ def cpu_calculation(path1, path2, num_processes):
                     total_differences += chunk_diffs
                     completed_count += 1
                     
-                    # Consolidar el json temporal al json principal de inmediato para ahorrar espacio
-                    if os.path.exists(tmp_file):
-                        with open(tmp_file, 'r') as tmp_in:
+                    # Consolidar cada temporal apenas termina evita dejar muchos archivos pesados sueltos.
+                    if tmp_file.exists():
+                        with tmp_file.open('r', encoding='utf-8') as tmp_in:
                             content = tmp_in.read()
                             if len(content) > 2: # Si no es solo "[]"
                                 if not first_write:
@@ -127,8 +130,7 @@ def cpu_calculation(path1, path2, num_processes):
                                 # Quitamos los corchetes exteriores [] del temporal
                                 inner_content = content[1:-1]
                                 final_json.write(inner_content)
-                        # Eliminamos el archivo temporal
-                        os.remove(tmp_file)
+                        tmp_file.unlink()
                     
                     # Calcular porcentaje
                     percent = int((completed_count / total_chunks) * 100)
@@ -165,7 +167,7 @@ if __name__ == "__main__":
         print(f"Tiempo total: {res.time_taken:.4f} segundos")
         print(f"Total de diferencias: {res.total_differences}")
         
-        with open("execution_time.json", "w") as f_time:
+        with EXECUTION_TIME_JSON_PATH.open("w", encoding="utf-8") as f_time:
             json.dump({
                 "file1": args.file1,
                 "file2": args.file2,

@@ -13,8 +13,9 @@ except ImportError:
     cp = None
 
 
-DIFFERENCES_JSON_PATH = Path("differences.json")
-EXECUTION_TIME_JSON_PATH = Path("execution_time.json")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DIFFERENCES_JSON_PATH = PROJECT_ROOT / "differences.json"
+EXECUTION_TIME_JSON_PATH = PROJECT_ROOT / "execution_time.json"
 PROGRESS_STEP = 10
 MAX_BATCH_LINES = 16384
 MAX_BATCH_CHARS = 8 * 1024 * 1024
@@ -107,6 +108,7 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
     if max_len == 0:
         return 0, first_entry
 
+    # Cada lote se normaliza a una matriz rectangular para comparar muchas columnas en paralelo en GPU.
     cpu_matrix1 = np.zeros((batch_size, max_len), dtype=np.uint8)
     cpu_matrix2 = np.zeros((batch_size, max_len), dtype=np.uint8)
 
@@ -124,6 +126,7 @@ def compare_batch_on_gpu(batch: list[ComparableBatchLine], output_file, first_en
 
     valid1 = column_indexes < gpu_lengths1[:, None]
     valid2 = column_indexes < gpu_lengths2[:, None]
+    # También marcamos como diferencia cuando una línea se acaba antes que la otra.
     mismatch_mask = (valid1 != valid2) | ((gpu_matrix1 != gpu_matrix2) & valid1 & valid2)
 
     mismatch_rows, mismatch_cols = cp.nonzero(mismatch_mask)
@@ -241,9 +244,8 @@ def gpu_calculation(*args) -> DnaComparison:
             compared_lines += 1
             current_batch_chars += max(len(line1), len(line2))
 
-            should_flush = (
-                len(current_batch) >= MAX_BATCH_LINES or current_batch_chars >= MAX_BATCH_CHARS
-            )
+            # El lote se descarga cuando ya tiene suficientes líneas o caracteres para no saturar VRAM/RAM.
+            should_flush = len(current_batch) >= MAX_BATCH_LINES or current_batch_chars >= MAX_BATCH_CHARS
             if should_flush:
                 batch_differences, first_entry = compare_batch_on_gpu(
                     current_batch,

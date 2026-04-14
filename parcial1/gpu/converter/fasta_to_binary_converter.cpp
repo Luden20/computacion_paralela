@@ -6,7 +6,7 @@
 
 using namespace std;
 
-// This function stores the raw ASCII value of each character
+// The converter stores raw ASCII values so Python/CuPy can load the sequence as uint8 quickly.
 uint8_t encode_base(char c) {
     return static_cast<uint8_t>(static_cast<unsigned char>(c));
 }
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Metadata: keep same 2-line format expected by Python
+    // Metadata keeps the matrix shape expected by the legacy Python GPU loader.
     meta_file << total_rows << "\n";
     meta_file << total_cols << "\n";
 
