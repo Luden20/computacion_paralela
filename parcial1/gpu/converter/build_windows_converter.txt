@@ -1,0 +1,1 @@
+x86_64-w64-mingw32-g++ fasta_to_binary_converter.cpp -o fasta_to_binary_converter_windows.exe -std=c++17 -static -static-libgcc -static-libstdc++

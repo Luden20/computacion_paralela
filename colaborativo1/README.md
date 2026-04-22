@@ -9,6 +9,7 @@ Este proyecto es un script en Python diseñado para **contar las bases nucleotí
 - Procesamiento paralelo utilizando `ProcessPoolExecutor`.
 - Compatible con archivos grandes en formato FASTA.
 - Opción iterativa para medir tiempos con distintos números de procesadores.
+- Archivo `requirements.txt` propio para instalar dependencias del benchmark.
 - Generación automática de gráficos de rendimiento:
   - `grafica.png` → Tiempo de ejecución vs. número de procesadores.
   - `grafica_speedup.png` → Speedup real vs. ideal.
@@ -18,19 +19,30 @@ Este proyecto es un script en Python diseñado para **contar las bases nucleotí
 ---
 
 # Uso
+## Instalación
+
+```bash
+pip install -r colaborativo1/requirements.txt
+```
+
 ## Ejecución simple
 
 Cuenta las bases utilizando un número fijo de procesadores:
-python main.py --file ruta/al/archivo.fasta --processors 4
+```bash
+python colaborativo1/colaborativo1.py --file ruta/al/archivo.fasta --processors 4
+```
 
 
 ## Modo iterativo (Benchmarking)
 Ejecuta el script para todos los procesadores desde 1 hasta el número indicado, generando gráficos de rendimiento:
-python main.py --file ruta/al/archivo.fasta --processors 8 --iterative
+```bash
+python colaborativo1/colaborativo1.py --file ruta/al/archivo.fasta --processors 8 --iterative
+```
 
 
-* Los gráficos se guardan en la carpeta actual (grafica.png, grafica_speedup.png, grafica_efficiency.png).
-* El conteo final de bases se guarda en conteo_final_{n}p.json.
+* Los gráficos se guardan en `colaborativo1/resultados/`.
+* Los JSON de conteo se guardan en `colaborativo1/resultados/conteo_final_{n}p.json`.
+* Los artefactos anteriores movidos desde la raíz quedaron en `colaborativo1/resultados/historicos/`.
 
 
 ## Cómo funciona
@@ -47,20 +59,20 @@ python main.py --file ruta/al/archivo.fasta --processors 8 --iterative
 
 El proyecto genera gráficos que permiten evaluar cómo cambia el rendimiento según la cantidad de procesadores utilizados:
 
-![Tiempo vs Procesadores](grafica.png)
+![Tiempo vs Procesadores](resultados/historicos/colaborativo1/grafica.png)
 
 Interpretación: LLegando a los 6 procesadores el tiempo ya se encuetra por debajo de los 100 segundos, llegando a su punto más óptimo con 13 procesadores con el menor tiempo posible. 
 Pasado los 13 procesadores el teimpo en vez de reducir aumenta.
 Se puede concluir que el el rango ideal este entro los 8 y 13 procesadores ya dentro de esa franjea no existe una diferencia significativa. 
 
 ---
-![Speedup](grafica_speedup.png)
+![Speedup](resultados/historicos/colaborativo1/grafica_speedup.png)
 
 Interpretación: El Speedup no es el esperado ya que se queda en valores menores a 6 aunque se aumente los procesadores el rendimiento decrece.
 
 
 ---
-![Eficiencia](grafica_efficiency.png)
+![Eficiencia](resultados/historicos/colaborativo1/grafica_efficiency.png)
 
 Interpretación: La eficiciencia va de la mano un poco con el Speedup ya que podemos notar que la eficiencia baja a más procesadores.
 
