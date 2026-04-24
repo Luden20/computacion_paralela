@@ -1,5 +1,8 @@
 ===== REPORTE DE RENDIMIENTO =====
 
+Ejecutado por: Omar
+Fecha: 2026-04-24 09:43:04
+
 CPU detectada: Intel64 Family 6 Model 186 Stepping 2, GenuineIntel
 Núcleos: 14 | Hilos: 20
 Frecuencia máxima: 2.6 GHz
@@ -9,4 +12,7 @@ GPU detectada: NO
 
 --- FLOPS ---
 FLOPS teóricos CPU: 582,400,000,000.00
-FLOPS reales CPU: 80,035,568,785.72
+FLOPS reales CPU: 25,412,554,491.56
+
+--- HISTÓRICO DE EJECUTORES ---
+Primera ejecución registrada.
