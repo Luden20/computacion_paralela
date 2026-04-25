@@ -1,5 +1,8 @@
-````markdown
-# 🚀 Guía completa Slurm (Master + Worker) — Ubuntu
+
+# Guía completa Slurm (Master + Worker) — Ubuntu
+>Las credenciales de las máquinas son
+> - user: cpdb
+> - password: thehousealwayswins
 
 > Configuración mínima funcional con:
 > - 1 nodo **master**
@@ -13,7 +16,7 @@
 
 ---
 
-# 🧱 1) INSTALAR PAQUETES (EN AMBOS NODOS)
+# 1) INSTALAR PAQUETES (EN AMBOS NODOS)
 
 ```bash
 sudo apt update
@@ -25,7 +28,7 @@ sudo systemctl restart ssh
 
 ---
 
-# 🏷️ 2) CONFIGURAR HOSTNAMES
+# 2) CONFIGURAR HOSTNAMES
 
 ## 🔵 En MASTER
 
@@ -43,13 +46,13 @@ echo worker1 | sudo tee /etc/hostname
 
 ---
 
-# 🌐 3) CONFIGURAR /etc/hosts (EN AMBOS)
+# 3) CONFIGURAR /etc/hosts (EN AMBOS)
 
 ```bash
 sudo nano /etc/hosts
 ```
 
-### 📄 Contenido (MASTER)
+### Contenido (MASTER)
 
 ```text
 127.0.0.1 localhost
@@ -59,7 +62,7 @@ sudo nano /etc/hosts
 192.168.220.130 worker1
 ```
 
-### 📄 Contenido (WORKER)
+### Contenido (WORKER)
 
 ```text
 127.0.0.1 localhost
@@ -71,7 +74,7 @@ sudo nano /etc/hosts
 
 ---
 
-# 🔍 4) PRUEBA DE RED
+# 4) PRUEBA DE RED
 
 ```bash
 ping -c 2 master
@@ -80,7 +83,7 @@ ping -c 2 worker1
 
 ---
 
-# 🔐 5) CONFIGURAR MUNGE
+#  5) CONFIGURAR MUNGE
 
 ## 🔵 En MASTER
 
@@ -95,7 +98,7 @@ sudo systemctl restart munge
 
 ---
 
-## 📤 Copiar clave al WORKER
+## Copiar clave al WORKER
 
 ```bash
 sudo scp /etc/munge/munge.key cpdb@worker1:/tmp/munge.key
@@ -116,7 +119,7 @@ sudo systemctl restart munge
 
 ---
 
-## ✅ Probar MUNGE entre nodos
+## Probar MUNGE entre nodos
 
 ```bash
 # desde MASTER
@@ -169,7 +172,7 @@ PartitionName=debug Nodes=worker1 Default=YES MaxTime=INFINITE State=UP
 
 ---
 
-# 📁 7) CREAR DIRECTORIOS
+#  7) CREAR DIRECTORIOS
 
 ## 🔵 MASTER
 
@@ -187,7 +190,7 @@ sudo chown slurm:slurm /var/spool/slurmd
 
 ---
 
-# 📤 8) COPIAR CONFIG AL WORKER
+#  8) COPIAR CONFIG AL WORKER
 
 ```bash
 # desde MASTER
@@ -202,7 +205,7 @@ sudo mv /tmp/slurm.conf /etc/slurm/slurm.conf
 
 ---
 
-# 🚀 9) LEVANTAR SERVICIOS
+#  9) LEVANTAR SERVICIOS
 
 ## 🔵 MASTER
 
@@ -222,7 +225,7 @@ sudo systemctl status slurmd
 
 ---
 
-# 🔎 10) VERIFICACIÓN FINAL
+#  10) VERIFICACIÓN FINAL
 
 ## Desde MASTER
 
@@ -233,7 +236,7 @@ scontrol show nodes
 
 ---
 
-# 🧪 11) PRUEBA DE EJECUCIÓN
+#  11) PRUEBA DE EJECUCIÓN
 
 ```bash
 srun -N1 -n1 hostname
@@ -269,10 +272,6 @@ debug* up infinite 1 idle worker1
 ```bash
 sudo journalctl -u slurmd -xe --no-pager
 sudo journalctl -u slurmctld -xe --no-pager
-```
-
-
-```
 ```
 # Para agregar un nodo clonando 
 ````markdown
@@ -357,5 +356,3 @@ sinfo
 srun -N2 -n2 hostname
 ```
 
-```
-```
