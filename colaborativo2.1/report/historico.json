@@ -1,0 +1,81 @@
+[
+    {
+        "usuario": "Omar 3",
+        "fecha": "2026-04-28 15:22:06",
+        "hardware_info": {
+            "cpu_system": "Windows",
+            "cpu_arch": "AMD64",
+            "ram_total_gb": 15.63,
+            "ram_available_gb": 6.04,
+            "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+            "cpu_cores": 14,
+            "cpu_threads": 20,
+            "cpu_freq_ghz": 2.6,
+            "cpu_flops_theoretical": 582400000000.0,
+            "gpu_available": false
+        },
+        "flops_reales": 99417004432.435,
+        "flops_teoricos": 582400000000.0,
+        "eficiencia_cpu_pct": 17.070227409415352
+    },
+    {
+        "usuario": "Omar4",
+        "fecha": "2026-04-28 15:27:04",
+        "hardware_info": {
+            "cpu_system": "Windows",
+            "cpu_arch": "AMD64",
+            "ram_total_gb": 15.63,
+            "ram_available_gb": 6.33,
+            "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+            "cpu_cores": 14,
+            "cpu_threads": 20,
+            "cpu_freq_ghz": 2.6,
+            "cpu_flops_theoretical": 582400000000.0,
+            "gpu_available": false
+        },
+        "flops_reales": 58960105710.0284,
+        "flops_teoricos": 582400000000.0,
+        "eficiencia_cpu_pct": 10.123644524386744
+    },
+    {
+        "usuario": "Omar5",
+        "fecha": "2026-04-28 15:34:28",
+        "hardware_info": {
+            "cpu_system": "Windows",
+            "cpu_arch": "AMD64",
+            "ram_total_gb": 15.63,
+            "ram_available_gb": 6.31,
+            "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+            "cpu_cores": 14,
+            "cpu_threads": 20,
+            "cpu_freq_ghz": 2.6,
+            "cpu_flops_theoretical": 582400000000.0,
+            "unidad_flops": "FLOPS (operaciones de coma flotante por segundo)",
+            "gpu_nvidia_detected": false
+        },
+        "flops_reales": 83318679790.62584,
+        "flops_teoricos": 582400000000.0,
+        "unidad_flops": "FLOPS (operaciones de coma flotante por segundo)",
+        "eficiencia_cpu_pct": 14.306091997016798
+    },
+    {
+        "usuario": "Omar6",
+        "fecha": "2026-04-28 15:39:34",
+        "hardware_info": {
+            "cpu_system": "Windows",
+            "cpu_arch": "AMD64",
+            "ram_total_gb": 15.63,
+            "ram_available_gb": 6.32,
+            "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+            "cpu_cores": 14,
+            "cpu_threads": 20,
+            "cpu_freq_ghz": 2.6,
+            "cpu_flops_theoretical": 582400000000.0,
+            "unidad_flops": "FLOPS (operaciones de coma flotante por segundo)",
+            "gpu_nvidia_detected": false
+        },
+        "flops_reales": 44857427034.426704,
+        "flops_teoricos": 582400000000.0,
+        "eficiencia_cpu_pct": 7.702168103438652
+    }
+]

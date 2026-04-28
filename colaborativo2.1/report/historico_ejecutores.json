@@ -4,5 +4,11 @@
     "fecha": "2026-04-24 09:43:04",
     "flops_reales": 25412554491.55854,
     "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel"
+  },
+  {
+    "nombre": "Omar2",
+    "fecha": "2026-04-28 15:11:21",
+    "flops_reales": 73956006947.19952,
+    "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel"
   }
 ]

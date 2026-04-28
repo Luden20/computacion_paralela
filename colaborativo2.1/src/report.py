@@ -3,10 +3,17 @@ def generate_report(cpu_info, results, path):
         f.write("==== REPORTE DE RENDIMIENTO ====\n\n")
 
         f.write(">> CPU DETECTADA:\n")
-        f.write(f"Modelo: {cpu_info['modelo']}\n")
-        f.write(f"Arquitectura: {cpu_info['arquitectura']}\n")
-        f.write(f"Cores: {cpu_info['cores']}\n")
-        f.write(f"Threads: {cpu_info['threads']}\n\n")
+        f.write(f"Modelo: {cpu_info['cpu_model']}\n")
+        f.write(f"Arquitectura: {cpu_info['cpu_arch']}\n")
+        f.write(f"Cores: {cpu_info['cpu_cores']}\n")
+        f.write(f"Threads: {cpu_info['cpu_threads']}\n\n")
+        f.write(f"RAM Total: {cpu_info['ram_total_gb']} GB\n")
+        f.write(f"RAM Disponible: {cpu_info['ram_available_gb']} GB\n\n")
+        f.buffer.write(f"FLOPS Teóricos CPU: {cpu_info['cpu_flops_theoretical']:.2e}\n\n".encode("utf-8"))
+        f.buffer.write(f"FLOPS Reales CPU: {results['cpu']['real']:.2e}\n\n".encode("utf-8"))
+        f.buffer.write(f"Eficiencia CPU: {(results['cpu']['real'] / cpu_info['cpu_flops_theoretical']) * 100:.2f}%\n\n".encode("utf-8"))
+        f.buffer.write(f"GPU Detectada: {'SI' if cpu_info['gpu_available'] else 'NO'}\n\n".encode("utf-8"))
+    
 
         f.write(">> RESULTADOS:\n")
         for k, v in results.items():

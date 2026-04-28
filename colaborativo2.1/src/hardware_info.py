@@ -4,29 +4,26 @@ import platform
 def get_hardware_info():
     info = {}
     
-    # CPU info
+    # Información del sistema
+    info["cpu_system"] = platform.system()
+    info["cpu_arch"] = platform.machine()
+    info["ram_total_gb"] = round(psutil.virtual_memory().total / (1024 ** 3), 2)
+    info["ram_available_gb"] = round(psutil.virtual_memory().available / (1024 ** 3), 2)
+
+    # Información de CPU
     info["cpu_model"] = platform.processor()
     info["cpu_cores"] = psutil.cpu_count(logical=False)
     info["cpu_threads"] = psutil.cpu_count(logical=True)
     freq = psutil.cpu_freq()
-    
+
     info["cpu_freq_ghz"] = round(freq.max / 1000, 2) if freq else 0
 
-    # FLOPS teóricos aproximados de CPU
-    # fórmula simple: FLOPS = núcleos * GHz * instrucciones por ciclo
-    info["cpu_flops_theoretical"] = (
-        info["cpu_cores"]
-        * info["cpu_freq_ghz"]
-        * 10**9
-        * 16  # aprox. SIMD AVX2 (puede variar)
-    )
-
-    # GPU (solo detecta si NVIDIA está presente)
+    # GPU (solo detecta NVIDIA si existe)
     try:
         import subprocess
         result = subprocess.check_output(["nvidia-smi", "-q"], stderr=subprocess.STDOUT)
-        info["gpu_available"] = True
-    except:
-        info["gpu_available"] = False
+        info["gpu_nvidia_detected"] = True
+    except Exception:
+        info["gpu_nvidia_detected"] = False
 
     return info
