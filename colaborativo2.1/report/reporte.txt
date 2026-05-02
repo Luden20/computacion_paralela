@@ -1,22 +1,22 @@
 ===== REPORTE DE RENDIMIENTO =====
 
-Ejecutado por : Antonio Proaño
-Fecha         : 2026-05-02 15:38:29
+Ejecutado por : Alfonso Chafla
+Fecha         : 2026-05-02 16:19:04
 
 ---- HARDWARE DETECTADO ----
-CPU Modelo    : Intel64 Family 6 Model 126 Stepping 5, GenuineIntel
+CPU Modelo    : AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD
 Arquitectura  : AMD64
-Núcleos       : 4
-Hilos         : 8
-Frecuencia    : 1.19 GHz
-RAM Total     : 15.7 GB
-RAM Disponible: 2.85 GB
-GPU           : No detectada
+Núcleos       : 8
+Hilos         : 16
+Frecuencia    : 4.0 GHz
+RAM Total     : 47.21 GB
+RAM Disponible: 26.05 GB
+GPU           : NVIDIA GeForce RTX 4060 Laptop GPU
 
 ---- RESULTADOS ----
-FLOPS teóricos CPU : 7.6160e+10
-FLOPS reales CPU   : 3.0915e+10
-Eficiencia CPU     : 40.59%
+FLOPS teóricos CPU : 5.1200e+11
+FLOPS reales CPU   : 2.6833e+11
+Eficiencia CPU     : 52.41%
 
 Gráfico    : report/resultados.png
 Histórico  : report/historico.json

@@ -107,5 +107,20 @@
         "flops_teoricos": 76160000000.0,
         "flops_reales": 30914916434.79703,
         "eficiencia_pct": 40.59
+    },
+    {
+        "usuario": "Alfonso Chafla",
+        "fecha": "2026-05-02 16:19:04",
+        "hardware": {
+            "cpu_model": "AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD",
+            "cpu_cores": 8,
+            "cpu_threads": 16,
+            "cpu_freq_ghz": 4.0,
+            "ram_total_gb": 47.21,
+            "gpu_model": "NVIDIA GeForce RTX 4060 Laptop GPU"
+        },
+        "flops_teoricos": 512000000000.0,
+        "flops_reales": 268332416352.1208,
+        "eficiencia_pct": 52.41
     }
 ]
