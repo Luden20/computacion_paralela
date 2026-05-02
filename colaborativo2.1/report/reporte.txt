@@ -1,25 +1,24 @@
 ===== REPORTE DE RENDIMIENTO =====
 
-Ejecutado por: Omar6
-Fecha: 2026-04-28 15:39:34
+Ejecutado por : Omar Lozada
+Fecha         : 2026-05-02 00:14:17
 
 ---- HARDWARE DETECTADO ----
-cpu_system: Windows
-cpu_arch: AMD64
-ram_total_gb: 15.63
-ram_available_gb: 6.32
-cpu_model: Intel64 Family 6 Model 186 Stepping 2, GenuineIntel
-cpu_cores: 14
-cpu_threads: 20
-cpu_freq_ghz: 2.6
-cpu_flops_theoretical: 582400000000.0
-unidad_flops: FLOPS (operaciones de coma flotante por segundo)
-gpu_nvidia_detected: False
+CPU Modelo    : Intel64 Family 6 Model 186 Stepping 2, GenuineIntel
+Arquitectura  : AMD64
+Núcleos       : 14
+Hilos         : 20
+Frecuencia    : 2.6 GHz
+RAM Total     : 15.63 GB
+RAM Disponible: 1.93 GB
+GPU           : No detectada
 
 ---- RESULTADOS ----
-FLOPS teóricos CPU: 5.82e+11
-FLOPS reales CPU:   4.49e+10
-Eficiencia CPU:     7.70%
+FLOPS teóricos CPU : 5.8240e+11
+FLOPS reales CPU   : 5.2635e+10
+Eficiencia CPU     : 9.04%
 
-Gráfico guardado en: report/resultados.png
-Histórico actualizado en: report/historico.json
+Gráfico    : report/resultados.png
+Histórico  : report/historico.json
+
+===== FIN DEL REPORTE =====

@@ -77,5 +77,20 @@
         "flops_reales": 44857427034.426704,
         "flops_teoricos": 582400000000.0,
         "eficiencia_cpu_pct": 7.702168103438652
+    },
+    {
+        "usuario": "Omar Lozada",
+        "fecha": "2026-05-02 00:14:17",
+        "hardware": {
+            "cpu_model": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+            "cpu_cores": 14,
+            "cpu_threads": 20,
+            "cpu_freq_ghz": 2.6,
+            "ram_total_gb": 15.63,
+            "gpu_model": "No detectada"
+        },
+        "flops_teoricos": 582400000000.0,
+        "flops_reales": 52635393921.14048,
+        "eficiencia_pct": 9.04
     }
 ]
