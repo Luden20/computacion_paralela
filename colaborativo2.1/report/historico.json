@@ -92,5 +92,20 @@
         "flops_teoricos": 582400000000.0,
         "flops_reales": 52635393921.14048,
         "eficiencia_pct": 9.04
+    },
+    {
+        "usuario": "Antonio Proaño",
+        "fecha": "2026-05-02 15:38:29",
+        "hardware": {
+            "cpu_model": "Intel64 Family 6 Model 126 Stepping 5, GenuineIntel",
+            "cpu_cores": 4,
+            "cpu_threads": 8,
+            "cpu_freq_ghz": 1.19,
+            "ram_total_gb": 15.7,
+            "gpu_model": "No detectada"
+        },
+        "flops_teoricos": 76160000000.0,
+        "flops_reales": 30914916434.79703,
+        "eficiencia_pct": 40.59
     }
 ]

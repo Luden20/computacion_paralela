@@ -1,22 +1,22 @@
 ===== REPORTE DE RENDIMIENTO =====
 
-Ejecutado por : Omar Lozada
-Fecha         : 2026-05-02 00:14:17
+Ejecutado por : Antonio Proaño
+Fecha         : 2026-05-02 15:38:29
 
 ---- HARDWARE DETECTADO ----
-CPU Modelo    : Intel64 Family 6 Model 186 Stepping 2, GenuineIntel
+CPU Modelo    : Intel64 Family 6 Model 126 Stepping 5, GenuineIntel
 Arquitectura  : AMD64
-Núcleos       : 14
-Hilos         : 20
-Frecuencia    : 2.6 GHz
-RAM Total     : 15.63 GB
-RAM Disponible: 1.93 GB
+Núcleos       : 4
+Hilos         : 8
+Frecuencia    : 1.19 GHz
+RAM Total     : 15.7 GB
+RAM Disponible: 2.85 GB
 GPU           : No detectada
 
 ---- RESULTADOS ----
-FLOPS teóricos CPU : 5.8240e+11
-FLOPS reales CPU   : 5.2635e+10
-Eficiencia CPU     : 9.04%
+FLOPS teóricos CPU : 7.6160e+10
+FLOPS reales CPU   : 3.0915e+10
+Eficiencia CPU     : 40.59%
 
 Gráfico    : report/resultados.png
 Histórico  : report/historico.json
