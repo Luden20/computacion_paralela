@@ -1,22 +1,22 @@
 ===== REPORTE DE RENDIMIENTO =====
 
-Ejecutado por : Alfonso Chafla
-Fecha         : 2026-05-02 16:19:04
+Ejecutado por : Sebas
+Fecha         : 2026-05-02 19:18:23
 
 ---- HARDWARE DETECTADO ----
-CPU Modelo    : AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD
+CPU Modelo    : AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD
 Arquitectura  : AMD64
 Núcleos       : 8
 Hilos         : 16
-Frecuencia    : 4.0 GHz
-RAM Total     : 47.21 GB
-RAM Disponible: 26.05 GB
+Frecuencia    : 3.2 GHz
+RAM Total     : 31.24 GB
+RAM Disponible: 17.07 GB
 GPU           : NVIDIA GeForce RTX 4060 Laptop GPU
 
 ---- RESULTADOS ----
-FLOPS teóricos CPU : 5.1200e+11
-FLOPS reales CPU   : 2.6833e+11
-Eficiencia CPU     : 52.41%
+FLOPS teóricos CPU : 4.0960e+11
+FLOPS reales CPU   : 1.6746e+11
+Eficiencia CPU     : 40.88%
 
 Gráfico    : report/resultados.png
 Histórico  : report/historico.json
