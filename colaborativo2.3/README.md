@@ -4,7 +4,7 @@
 
 source ~/ray-dna/bin/activate
 
-
+Con esto levantamos el cluster
 En ha1
 ```bash
 source ~/ray-dna/bin/activate
@@ -36,3 +36,16 @@ Con este repo clonado ejecutamos de esta forma
 ```bash
 python src/main.py --input data/dna_200mb.txt --patterns ATGCGT,TATA,GATTACA --chunk-mb 32 --output results/distribuido_200mb.json
 ```
+
+Vamos a generar 3 archivos, uno de 200mb, otro de 1gb y uno mas grande de 10 gb para poder comparar los resultados.
+
+| Archivo de entrada | Patrones | Chunk MB | Núcleos | Tiempo secuencial (s) | Tiempo distribuido (s) | Speedup | Eficiencia |
+|---|---|---:|---:|---:|---:|---:|---:|
+| data/dna_200mb.txt | ATGCGT, TATA, GATTACA | 32 | 6 | 3.2311 | 4.3855 | 0.7368 | 0.1228 |
+| data/dna_1gb.txt | ATGCGT, TATA, GATTACA | 32 | 6 | 19.1811 | 13.1015 | 1.4640 | 0.3660 |
+| data/dna_10gb.txt | ATGCGT, TATA, GATTACA | 32 | 6 | 227.3990 | 159.2666 | 1.4278 | 0.2380 |
+|
+
+Como mencion, durante la ejecucion de l archivo de 10GB se testeo (sin querer realmente) lo que se hace en un proceso de desconexion de un cluster durante una tarea. Los cluster tienen 2 CPU cada uno y 4GB de RAM, los cuales al parecer eran demasiado justos porque tanto ha2 y ha3 se saturaron y los procesos de hearbeat no funcionaron correctamente lo que provoco que se desconectaran, rapidamente se los volvio a conectar y estos de inmediato asumieron mas carga.
+
+Con esto en cuenta , el tiempo distribuido sigue siendo mejor que el secuencial y con pruebas mas intensivas se podria mejorar aun mas . El secuencial es mejor solo con el archivo de 200mb, esto se debe a que en esa escala de datos el overhead de la comunicacion entre procesos es mayor que el beneficio que se obtiene al paralelizar la tarea. Al aumentar la fraccion paralela, los resultados mejoran en tiempo.
