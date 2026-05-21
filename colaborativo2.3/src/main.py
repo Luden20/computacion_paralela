@@ -18,9 +18,11 @@ def obtenerNucleos( ray_address="auto"):
         ray.init()
     else:
         ray.init(address=ray_address)
-
+    
     resources = ray.cluster_resources()
     total_cpus = int(resources.get("CPU", 1))
+    ray.shutdown()
+
     return total_cpus
 def main():
     args = buildArgs()
