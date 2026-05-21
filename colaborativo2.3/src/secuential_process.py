@@ -62,26 +62,19 @@ def reduce_results(results, patterns):
 
     return final_bases, final_patterns, total_other, total_length
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True)
-    parser.add_argument("--patterns", default="ATGCGT,TATA,GATTACA")
-    parser.add_argument("--chunk-mb", type=int, default=32)
-    parser.add_argument("--output", default="results/secuencial.json")
-    args = parser.parse_args()
-
-    input_path = Path(args.input)
-    output_path = Path(args.output)
+def main(input, patterns="ATGCGT,TATA,GATTACA", chunk_mb=32, output="results/secuencial.json"):
+    input_path = Path(input)
+    output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    patterns = [pattern.strip().upper().encode() for pattern in args.patterns.split(",") if pattern.strip()]
-    if not patterns:
+    patterns_list = [pattern.strip().upper().encode() for pattern in patterns.split(",") if pattern.strip()]
+    if not patterns_list:
         raise ValueError("Debe indicar al menos un patrón.")
 
-    max_pattern_len = max(len(pattern) for pattern in patterns)
+    max_pattern_len = max(len(pattern) for pattern in patterns_list)
     overlap = max_pattern_len - 1
 
-    chunk_size = args.chunk_mb * 1024 * 1024
+    chunk_size = chunk_mb * 1024 * 1024
     file_size = input_path.stat().st_size
 
     results = []
@@ -95,11 +88,11 @@ def main():
             file.seek(offset)
             payload = file.read(read_len)
 
-            results.append(process_chunk(offset, payload, original_len, patterns))
+            results.append(process_chunk(offset, payload, original_len, patterns_list))
 
     elapsed = time.perf_counter() - start_time
 
-    final_bases, final_patterns, total_other, total_length = reduce_results(results, patterns)
+    final_bases, final_patterns, total_other, total_length = reduce_results(results, patterns_list)
 
     report = {
         "mode": "sequential",
@@ -107,7 +100,7 @@ def main():
         "file_size_bytes": file_size,
         "chunk_size_bytes": chunk_size,
         "chunks": len(results),
-        "patterns": [pattern.decode() for pattern in patterns],
+        "patterns": [pattern.decode() for pattern in patterns_list],
         "elapsed_seconds": elapsed,
         "base_counts": final_bases,
         "pattern_counts": final_patterns,
@@ -121,4 +114,16 @@ def main():
     print(json.dumps(report, indent=4))
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--patterns", default="ATGCGT,TATA,GATTACA")
+    parser.add_argument("--chunk-mb", type=int, default=32)
+    parser.add_argument("--output", default="results/secuencial.json")
+    args = parser.parse_args()
+
+    main(
+        input=args.input,
+        patterns=args.patterns,
+        chunk_mb=args.chunk_mb,
+        output=args.output,
+    )

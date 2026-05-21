@@ -32,3 +32,7 @@ sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.re
 
 sudo dnf install gh
 ```
+Con este repo clonado ejecutamos de esta forma 
+```bash
+python src/dna_ray.py --input data/dna_200mb.txt --patterns ATGCGT,TATA,GATTACA --chunk-mb 32 --output results/distribuido_200mb.json
+```
