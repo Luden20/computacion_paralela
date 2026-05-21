@@ -1,0 +1,10 @@
+{
+    "input_file": "data/dna_200mb.txt",
+    "patterns": "ATGCGT,TATA,GATTACA",
+    "chunk_mb": 32,
+    "nucleos": 6,
+    "tiempo_secuencial_segundos": 3.231144395999763,
+    "tiempo_distribuido_segundos": 4.385474171999704,
+    "speedup": 0.7367833600822268,
+    "eficiencia": 0.12279722668037113
+}

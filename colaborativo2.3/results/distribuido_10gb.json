@@ -1,0 +1,33 @@
+{
+    "mode": "distributed_ray",
+    "file": "data/dna_10gb.txt",
+    "file_size_bytes": 10485760000,
+    "chunk_size_bytes": 33554432,
+    "chunks": 313,
+    "patterns": [
+        "ATGCGT",
+        "TATA",
+        "GATTACA"
+    ],
+    "elapsed_seconds": 158.88443738299975,
+    "ray_total_cpus": 6,
+    "max_inflight_tasks": 6,
+    "base_counts": {
+        "A": 2621375917,
+        "T": 2621432010,
+        "C": 2621441077,
+        "G": 2621510996
+    },
+    "pattern_counts": {
+        "ATGCGT": 2560087,
+        "TATA": 40972588,
+        "GATTACA": 640699
+    },
+    "other_symbols": 0,
+    "total_processed_symbols": 10485760000,
+    "chunks_processed_by_worker": {
+        "ha3": 66,
+        "ha2": 75,
+        "ha1": 172
+    }
+}
