@@ -41,3 +41,5 @@ def main():
     print(f"Speedup: {secuential_time / distribuido_time}")
     
     
+if __name__ == "__main__":
+    main()
