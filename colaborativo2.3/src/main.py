@@ -32,13 +32,13 @@ def main():
     start = time.perf_counter()
     secuential_process.main(args.input, args.patterns, args.chunk_mb, args.output)
     end = time.perf_counter() 
-    secuential_time=start-end
+    secuential_time=end-start
     print(f"Tiempo secuencial: {secuential_time} segundos")
     print("Iniciando distribuido")
     start = time.perf_counter()
     paralel_cluster_process.main(args.input, args.patterns, args.chunk_mb, args.output, args.max_inflight, args.ray_address)
     end = time.perf_counter() 
-    distribuido_time=start-end
+    distribuido_time=end-start
     print(f"Tiempo distribuido: {distribuido_time} segundos")
     print(f"Speedup: {secuential_time / distribuido_time}")
     

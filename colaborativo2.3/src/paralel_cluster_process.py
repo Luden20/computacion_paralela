@@ -85,10 +85,11 @@ def main(input, patterns="ATGCGT,TATA,GATTACA", chunk_mb=32, output="results/dis
     chunk_size = chunk_mb * 1024 * 1024
     file_size = input_path.stat().st_size
 
+    runtime_env = {"working_dir": str(Path(__file__).parent.resolve())}
     if ray_address.lower() == "local":
-        ray.init()
+        ray.init(runtime_env=runtime_env)
     else:
-        ray.init(address=ray_address)
+        ray.init(address=ray_address, runtime_env=runtime_env)
 
     resources = ray.cluster_resources()
     total_cpus = int(resources.get("CPU", 1))
