@@ -476,19 +476,6 @@ Los scripts `secuencial.py` y `dna_ray.py` se obtienen del aula virtual y se col
 
 La versión secuencial procesa el archivo completo en un solo nodo, sin distribuir trabajo. Sirve como línea base para comparar cuánto tiempo tarda el enfoque tradicional:
 
-```bash
-python src/secuencial.py \
-  --input data/dna_200mb.txt \
-  --patterns ATGCGT,TATA,GATTACA \
-  --chunk-mb 32 \
-  --output results/secuencial_200mb.json
-
-python src/secuencial.py \
-  --input data/dna_1gb.txt \
-  --patterns ATGCGT,TATA,GATTACA \
-  --chunk-mb 32 \
-  --output results/secuencial_1gb.json
-```
 
 Aunque se usa `--chunk-mb 32`, en la versión secuencial los chunks se procesan uno por uno en el mismo proceso, sin paralelismo. Este parámetro existe para que la comparación con la versión distribuida sea justa (ambas usan los mismos tamaños de fragmento).
 
@@ -496,13 +483,7 @@ Aunque se usa `--chunk-mb 32`, en la versión secuencial los chunks se procesan 
 
 La versión distribuida usa Ray para enviar cada chunk a un nodo diferente del clúster. Todos los chunks se procesan en paralelo, y al final los resultados parciales se suman:
 
-```bash
-cd ~/dna-distribuido
 
-python src/dna_ray.py --input data/dna_200mb.txt --patterns ATGCGT,TATA,GATTACA --chunk-mb 32 --output results/distribuido_200mb.json
-
-python src/dna_ray.py --input data/dna_1gb.txt --patterns ATGCGT,TATA,GATTACA --chunk-mb 32 --output results/distribuido_1gb.json
-```
 
 Internamente el script implementa el patrón **divide y vencerás**:
 1. **Fragmentar**: divide el archivo en trozos de 32 MB.
