@@ -104,3 +104,10 @@ Este simple test tuvo la siguiente utilizacion de recursos:
 ### Memoria
 ![img](./img/aws/memory.png)
 Podemos ver que pese a ser un archivo relativamente pequeño, el programa consume toda la memoria disponible, pero si tuvieramos un presupuesto mas grande podriamos asignar un contenedor con mas memoria y asi poder procesar archivos mas grandes.
+
+## Conclusiones de AWS
+El despliegue en AWS fue bastante sencillo porque usamos la alternativa de Lightsail que es mucho mas sencilla que otros servicios de AWS que nos dan mas control pero tambien requieren mas configuracion. 
+
+# Despliegue en Google Cloud Platform
+# Despliegue en Azure
+# Despliegue en Oracle Cloud
