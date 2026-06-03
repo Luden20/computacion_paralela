@@ -4,3 +4,14 @@
 **/__pycache__/
 colaborativo2/.venv/
 parcial1/differences.json
+
+# Python virtual environments
+**/venv/
+**/.venv/
+
+# Docker / runtime dirs
+**/uploads/
+**/results/
+
+# Data files
+colaborativo2.3/data/
