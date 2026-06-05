@@ -36,12 +36,12 @@ Las imagenes se buildean y corren de la siguiente forma:
 
 **Build:**
 ```bash
-docker build -t luren12/dna-analisis-api:v1 .
+docker build -t luren12/dna-analisis-api:v2 .
 ```
 
 **Run:**
 ```bash
-docker run -p 8000:8000 luren12/dna-analisis-api:v1
+docker run -p 8000:8000 luren12/dna-analisis-api:v2
 ```
 
 **Llamar la API:**
@@ -63,17 +63,17 @@ docker login
 
 **Tag (si se buildeó sin el prefijo del usuario):**
 ```bash
-docker tag dna-analisis-api:v1 luren12/dna-analisis-api:v1
+docker tag dna-analisis-api:v2 luren12/dna-analisis-api:v2
 ```
 
 **Push:**
 ```bash
-docker push luren12/dna-analisis-api:v1
+docker push luren12/dna-analisis-api:v2
 ```
 
 **Pull desde cualquier máquina:**
 ```bash
-docker pull luren12/dna-analisis-api:v1
+docker pull luren12/dna-analisis-api:v2
 ```
  Una vez la imagen esté en Docker Hub, cualquier persona puede usarla sin necesidad de construirla localmente, facilitando la distribución y uso del servicio de análisis de ADN.
  ![img](./img/docker/hub.png)
@@ -109,5 +109,30 @@ Podemos ver que pese a ser un archivo relativamente pequeño, el programa consum
 El despliegue en AWS fue bastante sencillo porque usamos la alternativa de Lightsail que es mucho mas sencilla que otros servicios de AWS que nos dan mas control pero tambien requieren mas configuracion. 
 
 # Despliegue en Google Cloud Platform
+Para el despliegue en Google Cloud Platform, usaremos el servicio de Cloud Run, que nos permite desplegar aplicaciones en contenedores de una forma sencilla y escalable.
+## Set up
+![img](./img/google/home.png)
+Para esto configuraremos de la siguiente forma:
+![img](./img/google/conf1.png)
+![img](./img/google/conf2.png)
+Nota: No nos fijamos al momento de configurar el servicio de configurar el puerto por que se escucha, por lo que luego de desplegar el servicio tuvimos que configurar el puerto 8000 para que quede expuesto.
+![img](./img/google/fix.png)
+Algo a resaltar es que Cloud Run no nos alquila poder de computo fijo como AWS que corre con un EC2 por debajo, sino que nos cobra por uso de CPU virtual por segundo, lo que signifca que no establecemos limites fisicos, solo se nos cobra lo que se use. 
+
+Como resultado de esto tenemos una aplicacion contenerizada corriendo en Google Cloud Run, con un endpoint publico al cual se puede acceder desde cualquier parte del mundo. Algo a destacar es que en el proceso de configuracion podiamos seleccionar la cantidad minima  y maxima de nodos, algo que en lightsail no podiamos hacer. Esto permite que el servicio de contendores pueda desescalar a 0 cuando no se usa.El maximo configurado fue de 3.
+
+Con esto el resultado de creacion fue el siguiente ![img](./img/google/creating.png)
+## Pruebas
+Hicimos la misma pruena con Postman que hicimos en AWS, con el mismo archivo de 20 mb. El resultado fue el siguiente:
+![img](./img/google/postman.png)
+Como resultado del modelo de uso de CPU virtuales por segundo, no tenemos un limite estricto como en AWS por lo que la respuesta fue mucho mas rapida para el arhcivo de 20 mb, tardando alrededor de 3 segundos mientras en AWS tardo alrededor de 54 segundos. Una gran diferencia.
+
+Con la curiosidad de ver que pasaria con el archivo de 1GB se lo enviamos.
+![img](./img/google/postman1gb.png)
+El resultado fue inesperado, no fallo por falta de memoria como en AWS donde el contendor se saturo y no pudo ni responder. En Google Cloud Run el servicio luego de 1 minuto y 9 segundos respondio con que el archivo es demasiado largo para procesar. Es decir igual no lo proceso, pero no murio por falta de memoria, lo que es un gran punto a favor de este servicio.
+Con estas pruebas obtuvimos las siguientes metricas:
+![img](./img/google/metrics.png)
+![img](./img/google/metrics2.png)
+![img](./img/google/metrics3.png)
 # Despliegue en Azure
 # Despliegue en Oracle Cloud
