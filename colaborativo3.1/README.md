@@ -135,4 +135,142 @@ Con estas pruebas obtuvimos las siguientes metricas:
 ![img](./img/google/metrics2.png)
 ![img](./img/google/metrics3.png)
 # Despliegue en Azure
+
+
+Para el despliegue en Google Cloud Platform, usaremos el servicio de Cloud Run, que nos permite desplegar aplicaciones en contenedores de una forma sencilla y escalable.
+## Set up
+Creación del Grupo de Recursos
+
+El primer paso consistió en crear un grupo de recursos llamado rg-adn-eastus.
+
+![img](./img/azure/rg.png)
+
+El grupo de recursos funciona como un contenedor lógico donde Azure organiza todos los recursos relacionados con el proyecto. Esto facilita la administración, monitoreo y eliminación conjunta de los recursos utilizados por la aplicación.
+
+
+### Creación del App Service Plan
+
+Luego se creó un App Service Plan llamado ADNPlan.
+
+az appservice plan create \
+  --name ADNPlan \
+  --resource-group rg-adn-eastus \
+  --location eastus \
+  --is-linux \
+  --sku F1
+
+![img](./img/azure/plan_creado.png)
+
+Este recurso representa la infraestructura de cómputo donde se ejecutará la aplicación. En nuestro caso se utilizó la capa gratuita F1 sobre Linux.
+
+El App Service Plan define aspectos como:
+
+Sistema operativo.
+CPU disponible.
+Memoria disponible.
+Región de despliegue.
+Nivel de servicio contratado.
+
+Puede entenderse como el servidor administrado sobre el cual Azure ejecutará nuestra aplicación.
+
+
+
+
+### Creación de la Web App
+
+Una vez disponible la infraestructura, se creó la aplicación web llamada dna-api-oalozada.
+
+az webapp create \
+  --resource-group rg-adn-eastus \
+  --plan ADNPlan \
+  --name dna-api-oalozada \
+  --deployment-container-image-name luren12/dna-analisis-api:v2
+
+
+![img](./img/azure/app_service_creado.png)
+
+La Web App es el recurso encargado de descargar y ejecutar la imagen Docker publicada previamente en Docker Hub.
+
+La imagen utilizada fue:
+
+luren12/dna-analisis-api:v2
+
+Durante la creación, Azure generó automáticamente una URL pública para acceder al servicio.
+
+
+
+
+Configuración del Contenedor
+
+Posteriormente se configuró explícitamente la imagen Docker utilizada por la aplicación.
+
+az webapp config container set \
+  --resource-group rg-adn-eastus \
+  --name dna-api-oalozada \
+  --container-image-name luren12/dna-analisis-api:v2
+
+
+
+
+Configuración del Puerto
+
+Debido a que FastAPI escucha en el puerto 8000 dentro del contenedor, fue necesario indicar este puerto a Azure.
+
+az webapp config appsettings set \
+  --resource-group rg-adn-eastus \
+  --name dna-api-oalozada \
+  --settings WEBSITES_PORT=8000
+
+Finalmente se reinició la aplicación para aplicar los cambios.
+
+az webapp restart \
+  --resource-group rg-adn-eastus \
+  --name dna-api-oalozada
+
+
+
+
+Arquitectura Resultante
+
+Los recursos quedaron organizados de la siguiente forma:
+
+Grupo de Recursos
+└── rg-adn-eastus
+    │
+    ├── App Service Plan
+    │     └── ADNPlan
+    │          └── Linux Free (F1)
+    │
+    └── Web App
+          └── dna-api-oalozada
+                └── Imagen Docker:
+                    luren12/dna-analisis-api:v2
+
+La aplicación quedó disponible públicamente mediante:
+
+https://dna-api-oalozada.azurewebsites.net
+
+y la documentación Swagger mediante:
+
+https://dna-api-oalozada.azurewebsites.net/docs
+
+## Pruebas
+Para validar el funcionamiento del despliegue se utilizó el mismo archivo FASTA empleado.
+
+Hicimos la misma pruena con Postman que hicimos en AWS, con el mismo archivo de 20 mb. El resultado fue el siguiente:
+![img](./img/azure/postman.png)
+Como resultado del modelo de uso de CPU virtuales por segundo, no tenemos un limite estricto como en AWS por lo que la respuesta fue mucho mas rapida para el arhcivo de 20 mb.
+
+
+La prueba consistió en enviar un archivo mediante una petición POST al endpoint /analizar utilizando Postman.
+
+https://dna-api-oalozada.azurewebsites.net/analizar
+
+
+Luego comprobamos el usao de recursos.
+
+![img](./img/azure/metrics2.png)
+
+
+
 # Despliegue en Oracle Cloud
