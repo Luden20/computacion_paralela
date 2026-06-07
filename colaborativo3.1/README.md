@@ -273,4 +273,56 @@ Luego comprobamos el usao de recursos.
 
 
 
-# Despliegue en Oracle Cloud
+# Despliegue en DigitalOcean
+
+Para el despliegue en DigitalOcean usaremos el servicio de **App Platform**, que permite desplegar aplicaciones en contenedores de forma sencilla y administrada, sin necesidad de gestionar servidores ni redes manualmente.
+
+## Set up
+
+### Acceso a App Platform
+
+Ingresar a https://cloud.digitalocean.com y desde el panel principal hacer clic en **Create → Apps**.
+
+### Configurar la fuente de la imagen
+
+App Platform permite conectar directamente desde Docker Hub. Seleccionar **Docker Hub** como fuente e ingresar:
+
+| Campo | Valor |
+|---|---|
+| Repository | `luren12/dna-analisis-api` |
+| Tag | `v2` |
+
+Como la imagen es pública no se requieren credenciales adicionales.
+
+<img width="493" height="429" alt="image" src="https://github.com/user-attachments/assets/c035ce9d-ab32-4017-8663-f9c2269f8b29" />
+
+
+### Configurar el servicio
+
+En la siguiente pantalla, App Platform detecta automáticamente que es un contenedor web. Verificar y ajustar:
+
+| Campo | Valor |
+|---|---|
+| Service Name | `dna-api` |
+| HTTP Port | `8000` |
+
+En **Edit Plan** seleccionar el tier de recursos:
+
+| Campo | Valor |
+|---|---|
+| Plan | Basic |
+| Size | 512 MB RAM / 1 vCPU |
+
+> A diferencia de GCP e IBM Code Engine, DigitalOcean App Platform **no desescala a 0** en el plan Basic — corre de forma continua como AWS Lightsail, lo que implica un costo fijo mensual (~$5 USD para el tier más pequeño).
+
+### Configurar la región
+
+| Campo | Valor |
+|---|---|
+| Region | New York (NYC) |
+
+### Revisar y crear
+
+En la pantalla de resumen hacer clic en **Create Resources**. DigitalOcean construye y despliega la aplicación automáticamente tomando la imagen de Docker Hub.
+
+Una vez desplegado, el panel muestra la URL pública con formato:
