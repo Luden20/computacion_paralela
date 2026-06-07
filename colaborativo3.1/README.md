@@ -283,6 +283,9 @@ Para el despliegue en DigitalOcean usaremos el servicio de **App Platform**, que
 
 Ingresar a https://cloud.digitalocean.com y desde el panel principal hacer clic en **Create → Apps**.
 
+<img width="493" height="429" alt="image" src="https://github.com/user-attachments/assets/c035ce9d-ab32-4017-8663-f9c2269f8b29" />
+
+
 ### Configurar la fuente de la imagen
 
 App Platform permite conectar directamente desde Docker Hub. Seleccionar **Docker Hub** como fuente e ingresar:
@@ -293,8 +296,7 @@ App Platform permite conectar directamente desde Docker Hub. Seleccionar **Docke
 | Tag | `v2` |
 
 Como la imagen es pública no se requieren credenciales adicionales.
-
-<img width="493" height="429" alt="image" src="https://github.com/user-attachments/assets/c035ce9d-ab32-4017-8663-f9c2269f8b29" />
+<img width="830" height="461" alt="image" src="https://github.com/user-attachments/assets/813e69a9-9bfc-4b9b-981d-57e280d0e68a" />
 
 
 ### Configurar el servicio
@@ -313,7 +315,10 @@ En **Edit Plan** seleccionar el tier de recursos:
 | Plan | Basic |
 | Size | 512 MB RAM / 1 vCPU |
 
-> A diferencia de GCP e IBM Code Engine, DigitalOcean App Platform **no desescala a 0** en el plan Basic — corre de forma continua como AWS Lightsail, lo que implica un costo fijo mensual (~$5 USD para el tier más pequeño).
+> A diferencia de GCP e IBM Code Engine, DigitalOcean App Platform **no desescala a 0** en el plan Basic, lo que implica un costo fijo mensual ($5 USD para el tier más pequeño).
+
+<img width="1111" height="578" alt="image" src="https://github.com/user-attachments/assets/1de921a4-3d6f-4ea4-96bc-be7cbb6a60b2" />
+
 
 ### Configurar la región
 
@@ -321,8 +326,49 @@ En **Edit Plan** seleccionar el tier de recursos:
 |---|---|
 | Region | New York (NYC) |
 
+<img width="600" height="248" alt="image" src="https://github.com/user-attachments/assets/760447fb-f944-4fdd-b144-4ebaaa49ed10" />
+
+
 ### Revisar y crear
 
 En la pantalla de resumen hacer clic en **Create Resources**. DigitalOcean construye y despliega la aplicación automáticamente tomando la imagen de Docker Hub.
 
 Una vez desplegado, el panel muestra la URL pública con formato:
+
+**https://dna-api-<hash>.ondigitalocean.app**
+
+Los endpoints quedan disponibles en:
+
+**https://dna-api-<hash>.ondigitalocean.app/analizar**
+**https://dna-api-<hash>.ondigitalocean.app/docs**
+
+y el source: 
+
+**docker.io/luren12/dna-analisis-api:v2**
+
+## Pruebas
+
+Con Postman o curl, igual que en los despliegues anteriores:
+
+```bash
+curl -X POST https://dna-api-<hash>.ondigitalocean.app/analizar \
+  -F "file=@dna_20mb.txt" \
+  -F "patterns=ATGCGT,TATA,GATTACA" \
+  -F "chunk_mb=32"
+```
+
+
+## Conclusiones de DigitalOcean
+
+App Platform es posiblemente la consola más simple y limpia de todos los proveedores vistos en este colaborativo. Comparado con los demás:
+
+- **Simplicidad:** El flujo de configuración es el más corto — tres pantallas desde crear hasta tener la URL pública, sin pasos de corrección posteriores como en GCP o Azure.
+- **Escalado:** A diferencia de GCP e IBM Code Engine, **no desescala a 0**; el contenedor corre continuamente. Esto lo hace más parecido a AWS Lightsail en modelo de cobro.
+- **Precio predecible:** Al ser tarifa fija mensual $5 USD, es más fácil de presupuestar que los modelos de pago por uso de GCP e IBM, aunque potencialmente más caro si el servicio se usa poco, algo  bueno si es que no se logra cancelar el plan. DigitalOcean no tiene una capa gratuita permanente para App Platform, por lo que eliminar la app es el único paso necesario para detener la facturación. El cargo es por día proporcional, no por mes completo, así que si se destruye la app el mismo día del despliegue el costo es mínimo o nulo si se está dentro del período de prueba de $200 USD en créditos que ofrece DigitalOcean a cuentas nuevas.
+- **Red:** No requiere configurar VCN, Security Lists ni reglas de firewall manuales como en OCI — todo queda expuesto automáticamente por HTTPS con certificado SSL incluido.
+- **Dominio automático:** Al igual que GCP y Azure, asigna un dominio HTTPS automático sin configuración adicional, a diferencia de OCI que entrega solo una IP pública.
+
+
+
+
+
