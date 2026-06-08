@@ -272,103 +272,193 @@ Luego comprobamos el usao de recursos.
 ![img](./img/azure/metrics2.png)
 
 
+# Despliegue en IBM Cloud
 
-# Despliegue en DigitalOcean
-
-Para el despliegue en DigitalOcean usaremos el servicio de **App Platform**, que permite desplegar aplicaciones en contenedores de forma sencilla y administrada, sin necesidad de gestionar servidores ni redes manualmente.
+Para el despliegue en IBM Cloud usaremos el servicio de **Code Engine**, que permite desplegar aplicaciones en contenedores de forma serverless y escalable, similar a Google Cloud Run.
 
 ## Set up
 
-### Acceso a App Platform
+### Acceso a Code Engine
 
-Ingresar a https://cloud.digitalocean.com y desde el panel principal hacer clic en **Create → Apps**.
+Ingresar a https://cloud.ibm.com con cuenta y desde el catálogo buscar **Code Engine**, o navegar directamente desde el menú lateral en **Navigation Menu → Code Engine**.
 
-<img width="493" height="429" alt="image" src="https://github.com/user-attachments/assets/c035ce9d-ab32-4017-8663-f9c2269f8b29" />
+### Crear el Proyecto
 
-
-### Configurar la fuente de la imagen
-
-App Platform permite conectar directamente desde Docker Hub. Seleccionar **Docker Hub** como fuente e ingresar:
+El primer paso es crear un proyecto que contendrá la aplicación. Hacer clic en **Projects → Create Project** y completar:
 
 | Campo | Valor |
 |---|---|
-| Repository | `luren12/dna-analisis-api` |
-| Tag | `v2` |
+| Name | `dna-api-proyecto` |
+| Location | Dallas (us-south) |
+
+Una vez creado, seleccionarlo para entrar al panel del proyecto.
+
+<img width="1192" height="578" alt="image" src="https://github.com/user-attachments/assets/f5daf2b4-7ffa-4fc3-8dc0-e9a1be77e87a" />
+
+### Crear la Aplicación
+
+Dentro del proyecto, navegar a **Applications → Create Application** y completar los campos:
+
+**Sección General:**
+
+| Campo | Valor |
+|---|---|
+| Name | `dna-api` |
+
+<img width="907" height="549" alt="image" src="https://github.com/user-attachments/assets/8b9b889b-40eb-4af7-a69d-5d0c87928c3e" />
+
+
+**Sección Code:**
+
+Seleccionar **Container image** como fuente e ingresar:
+
+| Campo | Valor |
+|---|---|
+| Image reference | `docker.io/luren12/dna-analisis-api:v2` |
 
 Como la imagen es pública no se requieren credenciales adicionales.
-<img width="830" height="461" alt="image" src="https://github.com/user-attachments/assets/813e69a9-9bfc-4b9b-981d-57e280d0e68a" />
+
+<img width="425" height="493" alt="image" src="https://github.com/user-attachments/assets/4148f56e-968b-4891-a204-20b23e569b25" />
+
+<img width="460" height="338" alt="image" src="https://github.com/user-attachments/assets/04f34b4e-232b-40d2-b73b-88dfc8e8e1cf" />
 
 
-### Configurar el servicio
 
-En la siguiente pantalla, App Platform detecta automáticamente que es un contenedor web. Verificar y ajustar:
-
-| Campo | Valor |
-|---|---|
-| Service Name | `dna-api` |
-| HTTP Port | `8000` |
-
-En **Edit Plan** seleccionar el tier de recursos:
+**Sección Resources & Scaling:**
 
 | Campo | Valor |
 |---|---|
-| Plan | Basic |
-| Size | 512 MB RAM / 1 vCPU |
+| CPU | 1 vCPU |
+| Memory | 4 GB |
+| Min scale | `0` |
+| Max scale | `3` |
 
-> A diferencia de GCP e IBM Code Engine, DigitalOcean App Platform **no desescala a 0** en el plan Basic, lo que implica un costo fijo mensual ($5 USD para el tier más pequeño).
-
-<img width="1111" height="578" alt="image" src="https://github.com/user-attachments/assets/1de921a4-3d6f-4ea4-96bc-be7cbb6a60b2" />
+<img width="675" height="439" alt="image" src="https://github.com/user-attachments/assets/c3785917-58d6-4d80-b2d0-b526a3cb42af" />
 
 
-### Configurar la región
+**Sección Ports:**
 
 | Campo | Valor |
 |---|---|
-| Region | New York (NYC) |
+| Port | `8000` |
+| Protocol | HTTP1 |
 
-<img width="600" height="248" alt="image" src="https://github.com/user-attachments/assets/760447fb-f944-4fdd-b144-4ebaaa49ed10" />
+<img width="672" height="283" alt="image" src="https://github.com/user-attachments/assets/55f1ce49-e29e-466c-8fdb-f31b5e8e4627" />
 
 
-### Revisar y crear
+Finalmente hacer clic en **Create** y esperar a que el despliegue quede en estado **Ready**.
 
-En la pantalla de resumen hacer clic en **Create Resources**. DigitalOcean construye y despliega la aplicación automáticamente tomando la imagen de Docker Hub.
+<img width="1278" height="554" alt="image" src="https://github.com/user-attachments/assets/48c3ae91-c173-4453-b333-2273c71c4289" />
 
-Una vez desplegado, el panel muestra la URL pública con formato:
 
-**https://dna-api-<hash>.ondigitalocean.app**
+### Resultado
+
+Una vez desplegado, la consola muestra la URL pública generada automáticamente en el panel de la aplicación:
+
+**https://dna-api.2atpo9b2jtb1.us-south.codeengine.appdomain.cloud**
+
+
+<img width="1276" height="541" alt="image" src="https://github.com/user-attachments/assets/d64856a1-1491-4623-bff1-5736e0e4e744" />
+
 
 Los endpoints quedan disponibles en:
 
-**https://dna-api-<hash>.ondigitalocean.app/analizar**
-**https://dna-api-<hash>.ondigitalocean.app/docs**
+-*https://dna-api.2atpo9b2jtb1.us-south.codeengine.appdomain.cloud/analizar*
 
-y el source: 
-
-**docker.io/luren12/dna-analisis-api:v2**
+-*https://dna-api.2atpo9b2jtb1.us-south.codeengine.appdomain.cloud/docs*
 
 ## Pruebas
 
-Con Postman o curl, igual que en los despliegues anteriores:
+El proceso de pruebas es el mismo que en los despliegues anteriores — enviar el archivo de 20 MB al endpoint `/analizar` via Postman. Paso a paso:
 
-```bash
-curl -X POST https://dna-api-<hash>.ondigitalocean.app/analizar \
-  -F "file=@dna_20mb.txt" \
-  -F "patterns=ATGCGT,TATA,GATTACA" \
-  -F "chunk_mb=32"
+---
+
+**1. Abrir Postman y crear una nueva request**
+- Método: `POST`
+- URL: `https://dna-api.2atpo9b2jtb1.us-south.codeengine.appdomain.cloud/analizar`
+
+---
+
+<img width="876" height="628" alt="image" src="https://github.com/user-attachments/assets/ea28ba1c-4b31-40ef-bc0e-b28057094710" />
+
+
+**2. Configurar el Body**
+- Ir a la pestaña **Body**
+- Seleccionar **form-data**
+- Agregar los siguientes campos:
+
+| Key | Type | Value |
+|---|---|---|
+| `file` | File | seleccionar `dna_20mb.txt` desde tu máquina |
+| `patterns` | Text | `ATGCGT,TATA,GATTACA` |
+| `chunk_mb` | Text | `32` |
+
+<img width="849" height="195" alt="image" src="https://github.com/user-attachments/assets/cd4b8646-ae82-45cb-9427-156ac32a860d" />
+
+---
+
+
+
+
+**4. Verificar la respuesta**
+
+
+```json
+{
+    "mode": "sequential",
+    "file": "dna_20mb.txt",
+    "file_size_bytes": 20971520,
+    "chunk_size_bytes": 33554432,
+    "chunks": 1,
+    "patterns": ["ATGCGT", "TATA", "GATTACA"],
+    "elapsed_seconds": 5.21,
+    "base_counts": {
+        "A": 1234567,
+        "T": 1234567,
+        "C": 1234567,
+        "G": 1234567
+    },
+    "pattern_counts": {
+        "ATGCGT": 123,
+        "TATA": 456,
+        "GATTACA": 78
+    },
+    "other_symbols": 0,
+    "total_processed_symbols": 20971520
+}
 ```
+<img width="874" height="619" alt="image" src="https://github.com/user-attachments/assets/2591eccd-425e-4e72-bd87-714299f30de4" />
 
+---
 
-## Conclusiones de DigitalOcean
-
-App Platform es posiblemente la consola más simple y limpia de todos los proveedores vistos en este colaborativo. Comparado con los demás:
-
-- **Simplicidad:** El flujo de configuración es el más corto — tres pantallas desde crear hasta tener la URL pública, sin pasos de corrección posteriores como en GCP o Azure.
-- **Escalado:** A diferencia de GCP e IBM Code Engine, **no desescala a 0**; el contenedor corre continuamente. Esto lo hace más parecido a AWS Lightsail en modelo de cobro.
-- **Precio predecible:** Al ser tarifa fija mensual $5 USD, es más fácil de presupuestar que los modelos de pago por uso de GCP e IBM, aunque potencialmente más caro si el servicio se usa poco, algo  bueno si es que no se logra cancelar el plan. DigitalOcean no tiene una capa gratuita permanente para App Platform, por lo que eliminar la app es el único paso necesario para detener la facturación. El cargo es por día proporcional, no por mes completo, así que si se destruye la app el mismo día del despliegue el costo es mínimo o nulo si se está dentro del período de prueba de $200 USD en créditos que ofrece DigitalOcean a cuentas nuevas.
-- **Red:** No requiere configurar VCN, Security Lists ni reglas de firewall manuales como en OCI — todo queda expuesto automáticamente por HTTPS con certificado SSL incluido.
-- **Dominio automático:** Al igual que GCP y Azure, asigna un dominio HTTPS automático sin configuración adicional, a diferencia de OCI que entrega solo una IP pública.
+**5. Verificar la documentación interactiva (opcional)**
 
 
 
+<img width="1290" height="551" alt="image" src="https://github.com/user-attachments/assets/479d05e9-8f2d-4c09-ad10-4cc4b458a9c1" />
 
+
+Abrir en el navegador:
+
+https://dna-api.2atpo9b2jtb1.us-south.codeengine.appdomain.cloud/docs
+
+<img width="1323" height="506" alt="image" src="https://github.com/user-attachments/assets/23aa4d2b-952a-493c-aab5-c2a6138124e1" />
+
+
+<img width="1254" height="515" alt="image" src="https://github.com/user-attachments/assets/484e9f17-eb7b-4df3-82e0-5fa4a8e0b037" />
+
+<img width="1247" height="616" alt="image" src="https://github.com/user-attachments/assets/41e50d7d-b77d-4ee8-b76f-262eb91a31ce" />
+
+
+El valor clave a observar es `elapsed_seconds`. Dado que IBM Code Engine usa el mismo modelo de CPU virtual por segundo que GCP, se espera un tiempo de respuesta cercano al de Google Cloud Run y muy por debajo de AWS Lightsail, con la diferencia de que el primer request puede ser algo más lento si la instancia escaló a 0 por inactividad.
+
+## Conclusiones de IBM Cloud
+
+Code Engine resultó el servicio más parecido a Google Cloud Run dentro de este grupo de despliegues:
+
+- **Escalado:** Al igual que GCP, desescala a 0 instancias cuando no hay tráfico, por lo que no se incurre en costos en períodos de inactividad.
+- **URL automática:** Asigna un dominio HTTPS automático sin configuración adicional de red, a diferencia de OCI que requiere configurar VCN y Security Lists manualmente.
+- **Modelo de cobro:** Se factura por tiempo de CPU y memoria efectivamente usados durante la ejecución, no por capacidad reservada como en AWS Lightsail o Azure F1.
+- **Cold start:** Al desescalar a 0, el primer request tras un período de inactividad puede tardar unos segundos adicionales antes de responder, algo que no ocurre en DigitalOcean o AWS donde el contenedor corre continuamente.
+- **Capa gratuita:** IBM Cloud ofrece una cuota mensual gratuita de 50 GB-s de memoria y 10 vCPU-s en Code Engine, suficiente para pruebas como las realizadas con el archivo de 20 MB.
 
