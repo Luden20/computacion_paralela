@@ -462,3 +462,69 @@ Code Engine resultó el servicio más parecido a Google Cloud Run dentro de este
 - **Cold start:** Al desescalar a 0, el primer request tras un período de inactividad puede tardar unos segundos adicionales antes de responder, algo que no ocurre en DigitalOcean o AWS donde el contenedor corre continuamente.
 - **Capa gratuita:** IBM Cloud ofrece una cuota mensual gratuita de 50 GB-s de memoria y 10 vCPU-s en Code Engine, suficiente para pruebas como las realizadas con el archivo de 20 MB.
 
+# Comparativa General de Proveedores
+
+## Planes y Costos
+
+| Proveedor | Servicio usado | Tier gratuito | Costo mínimo de producción | Modelo de cobro |
+|---|---|---|---|---|
+| **AWS** | Lightsail Containers | 3 meses gratis (plan Micro $10/mes) | **$10/mes** (Micro: 0.25 vCPU, 0.5 GB RAM) | Tarifa plana mensual por nodo reservado |
+| **Google Cloud** | Cloud Run | Permanente: 180k vCPU-s, 360k GB-s, 2M requests/mes | ~**$0–$14/mes** según tráfico | Por vCPU-segundo ($0.000024/vCPU-s) + por GB-segundo + por millón de requests |
+| **Azure** | App Service (Web App for Containers) | F1 gratis (infraestructura compartida, sin SLA, límite de CPU diario) | **$13–$14/mes** (plan B1: 1 vCPU, 1.75 GB RAM dedicados) | Tarifa plana mensual por plan; F1 no es apto para producción |
+| **IBM Cloud** | Code Engine | Mensual: 100k vCPU-s + 200k GB-s | ~**$0–$5/mes** para cargas ligeras | Por vCPU-segundo + por GB-segundo; escala a 0 |
+
+---
+
+## Modelo de Uso del Servicio
+
+| Proveedor | Interfaz principal | Escalado | Cold start | Dificultad de setup |
+|---|---|---|---|---|
+| **AWS Lightsail** | Consola web gráfica, muy guiada | Manual (nodos fijos) | No (contenedor siempre activo) | Muy fácil |
+| **Google Cloud Run** | Consola web + `gcloud` CLI | Automático (0 a N instancias) | Sí (si escala a 0) | Fácil |
+| **Azure App Service** | Consola web + `az` CLI | Manual en F1/B1; automático desde P1 | No en tiers básicos (contenedor activo) | Moderado (requiere Resource Group + App Service Plan + Web App) |
+| **IBM Code Engine** | Consola web + `ibmcloud` CLI | Automático (0 a N instancias) | Sí (si escala a 0) | Fácil |
+
+---
+
+## Modelo de Pago
+
+| Proveedor | Forma de pago | Requiere tarjeta para free tier | Crédito inicial | Facturación |
+|---|---|---|---|---|
+| **AWS** | Tarjeta de crédito / débito, PayPal (según región) | Sí | $300 por 30 días | Mensual, con desglose detallado en AWS Cost Explorer |
+| **Google Cloud** | Tarjeta, transferencia bancaria (en algunos países) | Sí | $300 por 90 días | Mensual; alertas de presupuesto configurables |
+| **Azure** | Tarjeta de crédito / débito | Sí (para tiers pagos; F1 no la requiere) | $200 por 30 días | Mensual; el portal muestra estimados en tiempo real |
+| **IBM Cloud** | Tarjeta de crédito / débito | Sí (para PAYG; Lite plan no la requiere) | $200 por 30 días | Mensual; se pueden configurar umbrales de gasto al 80%, 90% y 100% |
+
+
+**TOMEN EN CUENTA QUE SOLO ACEPTA VISA/MASTERCARD/DINERS Y PAYPAL, NADA DE OTROS PROVEEDORES O DEUNA.**
+
+---
+
+## Desempeño Comparado (archivo de 20 MB)
+
+| Proveedor | Tiempo de respuesta (20 MB) | Resultado con 1 GB | Observaciones |
+|---|---|---|---|
+| **AWS Lightsail** | ~54 segundos | Falla por falta de memoria | CPU y RAM fijos y limitados en el tier básico |
+| **Google Cloud Run** | ~3 segundos | No falla; retorna error controlado tras 69 s | Escalado dinámico de CPU; el mejor rendimiento en pruebas |
+| **Azure App Service** | Similar a GCP (F1 compartida) | No probado | F1 tiene throttling agresivo de CPU en infraestructura compartida |
+| **IBM Code Engine** | ~5.21 segundos | No probado | Modelo similar a GCP; cold start posible tras inactividad |
+
+---
+
+## ¿Cuál es el mejor para un despliegue real?
+
+### Para una API de análisis de ADN en producción real: Google Cloud Run
+
+**Razón técnica:** Es el único servicio que demostró manejar cargas variables sin fallar ni consumir recursos en exceso. Al escalar dinámicamente y cobrar solo por CPU y memoria efectivamente consumidas, es ideal para una API que recibe peticiones esporádicas de archivos pesados.
+
+**Razón económica:** La capa gratuita cubre 2 millones de requests, 360,000 GB-segundos de memoria y 180,000 vCPU-segundos de cómputo al mes sin expiración, suficiente para un uso académico o prototipo de baja frecuencia completamente gratis. Para tráfico moderado, el costo estimado es de $0 a ~$14/mes, muy por debajo del costo fijo de AWS Lightsail ($10/mes garantizados aunque no se use).
+
+**Razón operativa:** El setup es sencillo (interfaz gráfica + CLI), genera URL HTTPS automática, y el escalado a 0 cuando no hay tráfico evita cargos innecesarios. No requiere configuración de red manual.
+
+---
+
+### No recomendados para producción en este caso de uso
+
+- **AWS Lightsail:** El plan Micro de contenedores cuesta $10/mes con solo 0.25 vCPU y 0.5 GB de RAM, precio fijo comparable al de otros servicios pero con peor desempeño; la API tardó 54 segundos vs 3 segundos en GCP para el mismo archivo.
+- **Azure App Service F1:** El tier gratuito corre en infraestructura compartida con throttling agresivo; tras agotar la cuota de CPU los requests retornan 503, sin SLA ni SSL en dominio personalizado. Para producción real se necesita al menos el plan B1 (~$13–$14/mes), que no añade ventajas frente a GCP.
+- **IBM Code Engine:** Técnicamente equivalente a GCP Cloud Run, pero con una capa gratuita más pequeña (100k vCPU-s vs 180k de GCP) y un ecosistema más limitado. Es una opción válida si ya se trabaja en entornos enterprise IBM.
