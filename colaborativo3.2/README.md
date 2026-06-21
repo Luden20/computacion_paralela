@@ -47,3 +47,49 @@ Realizamos la misma prueba que con Scaleaway, enviando el archivo `dna_20mb.txt`
 ![](./img/alibaba/postman.png)
 ## Conclusiones Alibaba Cloud
 Alibaba Cloud ECI es un servicio funcional para desplegar contenedores sin gestionar servidores, con una interfaz detallada que expone bastante granularidad en la configuracion (VPC, vSwitch, security groups, politicas de reinicio). El modelo de precios Pay-as-you-go es muy economico ($0.00000616 USD/segundo ≈ $0.53 USD/dia para 1 vCPU + 2 GiB). Sin embargo, la mayoria de los centros de datos se encuentran en Asia, lo que puede implicar mayor latencia para usuarios en otras regiones. El proceso de configuracion es mas complejo que en Scaleaway, requiriendo conocimiento de conceptos de red como VPC, vSwitch y security groups.
+
+
+# Despliegue Sliplane (Asia)
+Para este proveedor utilizaremos Sliplane, una plataforma especializada en el despliegue de aplicaciones contenerizadas. Sliplane abstrae gran parte de la complejidad de la infraestructura, permitiendo desplegar imágenes Docker directamente desde Docker Hub sin necesidad de gestionar servidores, redes o balanceadores de carga manualmente.
+
+## Set up
+Al ingresar a Sliplane podemos observar el panel principal de la plataforma. Desde aquí es posible administrar proyectos, servidores, bases de datos y otros recursos asociados al despliegue de aplicaciones.
+![](./img/sliplane/sliplanewelcome.png)
+
+
+El primer paso consiste en crear un nuevo proyecto. En Sliplane los proyectos funcionan como contenedores lógicos donde se agrupan los distintos servicios que forman parte de una aplicación.
+![](./img/sliplane/createproject.png)
+
+
+Una vez creado el proyecto procedemos a crear un servidor. Para esta prueba utilizamos la región US East, configurando una instancia con 1 vCPU y 1 GB de memoria RAM, recursos suficientes para ejecutar nuestra API de análisis de ADN.
+![](./img/sliplane/createserver.png)
+
+
+Con el servidor listo, procedemos a crear un nuevo servicio dentro del proyecto. Sliplane permite desplegar directamente imágenes Docker alojadas en registros públicos, por lo que utilizamos la misma imagen empleada en los colaborativos anteriores: luren12/dna-analisis-api:v2.
+![](./img/sliplane/deployservice.png)
+
+
+Durante la configuración del servicio especificamos la imagen Docker y configuramos el protocolo HTTP, que es lo necerario para usar FastAPI dentro del contenedor.
+![](./img/sliplane/deployservice2.png)
+
+
+Una vez finalizado el despliegue, Sliplane genera automáticamente una URL pública para acceder al servicio. Como validación inicial accedimos a la documentación Swagger generada por FastAPI, comprobando que la aplicación se encontraba ejecutándose correctamente y que el endpoint /docs estaba disponible.
+![](./img/sliplane/fastapicheck.png)
+
+## Pruebas
+Para validar el funcionamiento realizamos la misma prueba utilizada en los demás proveedores cloud. Accedimos a la documentación Swagger y verificamos que el endpoint estuviera disponible para recibir solicitudes.
+![](./img/sliplane/testapi.png)
+
+Posteriormente utilizamos Postman para enviar el archivo de prueba de 20 MB al endpoint /analizar. La API respondió correctamente con código de estado 200 OK, procesando el archivo y devolviendo los resultados esperados.
+![](./img/sliplane/tespostman.png)
+
+
+Adicionalmente revisamos las métricas proporcionadas por la plataforma. Estas métricas permiten observar el consumo de CPU, memoria y otros recursos del contenedor mientras procesa las solicitudes. Se ven los dos accesos al enpoint y cada uno no ocupa ni el 50% de los recursos.
+![](./img/sliplane/metricasconsumo.png)
+
+## Conclusiones Sliplane
+Sliplane resultó ser una de las plataformas más sencillas de utilizar durante el desarrollo de este colaborativo. Su integración directa con Docker Hub simplifica considerablemente el proceso de despliegue, ya que únicamente es necesario proporcionar la imagen Docker y configurar el puerto de exposición.
+
+La interfaz es intuitiva y el proceso de despliegue es rápido, permitiendo tener una aplicación funcional en pocos minutos. Además, la plataforma proporciona métricas básicas de utilización que facilitan el monitoreo del servicio.
+
+Como aspecto menos favorable, ofrece menos opciones avanzadas de configuración y escalamiento que proveedores más grandes como Google Cloud Platform o Alibaba Cloud. Sin embargo, para aplicaciones contenerizadas relativamente simples como esta API de análisis de ADN, representa una alternativa práctica, rápida y fácil de administrar.
