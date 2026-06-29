@@ -58,8 +58,6 @@ def main():
     crear_estructura(dbx, BASE_DIRS)
 
     job_uuid = str(uuid.uuid4())
-    remote_job_dir = f"{BASE_DROPBOX_DIR}/{job_uuid}"
-    crear_estructura(dbx, [remote_job_dir])
 
     input_path = Path("aux/cadenas_originales") / f"cadena_100mb_{job_uuid}.txt"
     output_path = Path("aux/resultados") / f"secuencial_{job_uuid}.json"
@@ -67,9 +65,9 @@ def main():
     generador.generate_dna_file(input_path, 100, 4)
     secuential_process.main(input=str(input_path), output=str(output_path))
 
-    subir_archivo(dbx, input_path, f"{remote_job_dir}/{input_path.name}")
-    subir_archivo(dbx, output_path, f"{remote_job_dir}/{output_path.name}")
-    listar(dbx, remote_job_dir)
+    subir_archivo(dbx, input_path, f"{BASE_DROPBOX_DIR}/cadenas_originales/{input_path.name}")
+    subir_archivo(dbx, output_path, f"{BASE_DROPBOX_DIR}/resultados/{output_path.name}")
+    listar(dbx, BASE_DROPBOX_DIR)
 
 
 if __name__ == "__main__":
